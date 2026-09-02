@@ -70,3 +70,28 @@ class PythonManifest(BaseModel):
     project_name: str
     requires_python: str | None
     dependencies: list[DependencyRecord]
+
+
+class EvidenceSource(BaseModel):
+    publisher: str
+    url: str
+    title: str
+    excerpt: str
+    retrieved_at: datetime
+
+
+class AdvisoryEvidence(BaseModel):
+    identifier: str
+    package: str
+    affected_version: str
+    fixed_versions: list[str]
+    summary: str
+    severity: str | None = None
+    source: EvidenceSource
+
+
+class ReleaseEvidence(BaseModel):
+    package: str
+    version: str
+    summary: str
+    source: EvidenceSource

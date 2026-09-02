@@ -1,0 +1,14 @@
+[
+  {
+    "package": "jinja2",
+    "version": "3.1.5",
+    "summary": "Security release that addresses sandbox breakout issues affecting earlier versions.",
+    "source": {
+      "publisher": "PyPI",
+      "url": "https://pypi.org/project/Jinja2/3.1.5/",
+      "title": "Jinja2 3.1.5",
+      "excerpt": "Package metadata and release files for version 3.1.5.",
+      "retrieved_at": "2026-09-02T00:00:00Z"
+    }
+  }
+]
