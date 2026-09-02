@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -49,3 +50,23 @@ class ApprovalDecision(BaseModel):
     approval_id: str
     choice: ApprovalChoice
     created_at: datetime = Field(default_factory=utc_now)
+
+
+class RepositorySnapshot(BaseModel):
+    path: Path
+    head: str
+    branch: str
+    dirty: bool
+
+
+class DependencyRecord(BaseModel):
+    name: str
+    ecosystem: str
+    declared_requirement: str
+    resolved_version: str | None
+
+
+class PythonManifest(BaseModel):
+    project_name: str
+    requires_python: str | None
+    dependencies: list[DependencyRecord]

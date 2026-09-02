@@ -1,0 +1,14 @@
+version = 1
+revision = 1
+requires-python = ">=3.11"
+
+[[package]]
+name = "click"
+version = "8.1.8"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "jinja2"
+version = "3.1.4"
+source = { registry = "https://pypi.org/simple" }
+
