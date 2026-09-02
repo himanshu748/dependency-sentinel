@@ -18,7 +18,5 @@ class Settings(BaseSettings):
     workspace_root: Path = Path("./data/workspaces")
     evidence_fixture_path: Path = Path("../fixtures/evidence")
     command_timeout_seconds: int = 120
-    max_model_calls: int = 12
-    max_tool_calls: int = 30
     aws_region: str = "us-east-1"
     bedrock_model_id: str | None = Field(default=None, validation_alias="BEDROCK_MODEL_ID")
