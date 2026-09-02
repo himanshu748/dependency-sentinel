@@ -95,3 +95,25 @@ class ReleaseEvidence(BaseModel):
     version: str
     summary: str
     source: EvidenceSource
+
+
+class CommandResult(BaseModel):
+    command: list[str]
+    exit_code: int
+    stdout: str
+    stderr: str
+    duration_seconds: float
+    timed_out: bool = False
+
+
+class UpgradeChange(BaseModel):
+    package: str
+    from_version: str
+    to_version: str
+    changed_files: list[Path]
+    diff: str
+
+
+class ValidationReport(BaseModel):
+    passed: bool
+    results: list[CommandResult]
