@@ -117,3 +117,17 @@ class UpgradeChange(BaseModel):
 class ValidationReport(BaseModel):
     passed: bool
     results: list[CommandResult]
+
+
+class CandidateSelection(BaseModel):
+    package: str
+    current_version: str
+    target_version: str
+    advisory_identifier: str
+    rationale: str
+
+
+class WorkflowOutcome(BaseModel):
+    run: AgentRun
+    candidate: CandidateSelection
+    approval_id: str | None = None
