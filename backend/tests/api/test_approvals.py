@@ -5,9 +5,7 @@ from httpx import ASGITransport, AsyncClient
 @pytest.mark.asyncio
 async def test_approval_endpoint_resumes_paused_run(api_app) -> None:
     repository = api_app.state.test_repository
-    async with AsyncClient(
-        transport=ASGITransport(app=api_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
         created = await client.post(
             "/api/runs",
             json={"repository": str(repository)},
@@ -26,9 +24,7 @@ async def test_approval_endpoint_resumes_paused_run(api_app) -> None:
 @pytest.mark.asyncio
 async def test_approval_endpoint_returns_actionable_gate_error(api_app) -> None:
     repository = api_app.state.test_repository
-    async with AsyncClient(
-        transport=ASGITransport(app=api_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
         created = await client.post(
             "/api/runs",
             json={"repository": str(repository)},

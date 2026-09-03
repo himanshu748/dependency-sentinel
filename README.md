@@ -75,6 +75,8 @@ DEPENDENCY_SENTINEL_AWS_REGION=us-east-1
 DEPENDENCY_SENTINEL_FIXTURE_MODE=false
 ```
 
+`amazon.nova-micro-v1:0` is an on-demand text-model example listed in `us-east-1`; verify access in your own account before enabling live mode. The Bedrock client explicitly caps each response at 512 tokens to bound quota reservation and cost.
+
 Live mode can use paid AWS services and public advisory APIs. Confirm your AWS budget and model access before enabling it. The current repository demonstrates Strands Agents SDK orchestration locally. It does not claim an Amazon Bedrock AgentCore deployment.
 
 ## API surface

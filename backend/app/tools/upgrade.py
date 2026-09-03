@@ -21,7 +21,7 @@ def _replace_declared_dependency(text: str, package: str, target_version: str) -
     match = pattern.search(text)
     if match is None:
         raise UpgradeError(f"package {package!r} is not declared")
-    replacement = f'{match.group("quote")}{package}=={target_version}{match.group("quote")}'
+    replacement = f"{match.group('quote')}{package}=={target_version}{match.group('quote')}"
     return f"{text[: match.start()]}{replacement}{text[match.end() :]}"
 
 

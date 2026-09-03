@@ -90,4 +90,3 @@ def test_osv_provider_exposes_unavailable_evidence(tmp_path: Path) -> None:
     client = httpx.Client(transport=httpx.MockTransport(handler))
     with pytest.raises(EvidenceUnavailable, match="OSV advisory lookup failed"):
         OsvAdvisoryProvider(client=client).advisories_for("jinja2", "3.1.4")
-

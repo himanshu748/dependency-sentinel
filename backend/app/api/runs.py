@@ -18,9 +18,7 @@ def _run_id(idempotency_key: str) -> str:
     return f"run-{digest}"
 
 
-def create_runs_router(
-    *, store: SQLiteStore, workflow: DependencyUpgradeWorkflow
-) -> APIRouter:
+def create_runs_router(*, store: SQLiteStore, workflow: DependencyUpgradeWorkflow) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["runs"])
 
     @router.post("/runs")

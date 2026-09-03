@@ -24,6 +24,7 @@ def test_strands_agent_registers_only_read_only_discovery_tools(tmp_path: Path) 
     )
 
     assert isinstance(agent, Agent)
+    assert agent.model.config["max_tokens"] == 512
     assert set(agent.tool_names) == {
         "inspect_repository",
         "scan_python_manifest",

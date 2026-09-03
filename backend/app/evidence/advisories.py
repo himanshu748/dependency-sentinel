@@ -70,4 +70,3 @@ class OsvAdvisoryProvider:
                 retrieved_at=utc_now(),
             ),
         )
-

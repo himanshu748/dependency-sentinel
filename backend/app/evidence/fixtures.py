@@ -37,4 +37,3 @@ class FixtureEvidenceStore:
         if not isinstance(loaded, list):
             raise EvidenceUnavailable(f"evidence fixture {filename} must contain a list")
         return loaded
-

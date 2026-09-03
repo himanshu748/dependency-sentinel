@@ -1,2 +1,1 @@
 """Dependency Sentinel backend package."""
-

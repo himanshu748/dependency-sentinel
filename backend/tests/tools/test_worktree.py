@@ -19,7 +19,7 @@ def seeded_repository(path: Path) -> Path:
     git(path, "init", "-q")
     git(path, "config", "user.email", "sentinel@example.test")
     git(path, "config", "user.name", "Dependency Sentinel")
-    (path / "pyproject.toml").write_text("[project]\nname = \"fixture\"\n")
+    (path / "pyproject.toml").write_text('[project]\nname = "fixture"\n')
     git(path, "add", "pyproject.toml")
     git(path, "commit", "-qm", "fixture")
     return path
@@ -32,7 +32,7 @@ def test_disposable_worktree_never_changes_source_checkout(tmp_path: Path) -> No
     before_status = git(source, "status", "--porcelain=v1")
 
     with DisposableWorktree(source, workspace_root) as workspace:
-        (workspace / "pyproject.toml").write_text("[project]\nname = \"changed\"\n")
+        (workspace / "pyproject.toml").write_text('[project]\nname = "changed"\n')
         assert (source / "pyproject.toml").read_text() == '[project]\nname = "fixture"\n'
         workspace_path = workspace
 

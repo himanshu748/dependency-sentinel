@@ -83,6 +83,4 @@ def test_conflicting_approval_decision_is_rejected(tmp_path: Path) -> None:
     assert first == repeated
     assert store.has_approval("run-003", "prepare-pr") is True
     with pytest.raises(ApprovalConflict, match="already recorded"):
-        store.record_approval(
-            "run-003", approval_id="prepare-pr", choice=ApprovalChoice.REJECTED
-        )
+        store.record_approval("run-003", approval_id="prepare-pr", choice=ApprovalChoice.REJECTED)

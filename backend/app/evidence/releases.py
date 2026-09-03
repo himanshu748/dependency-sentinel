@@ -12,9 +12,7 @@ class PypiReleaseProvider:
 
     def release_for(self, package: str, version: str) -> ReleaseEvidence:
         normalized_package = package.lower()
-        api_url = (
-            f"https://pypi.org/pypi/{quote(normalized_package)}/{quote(version)}/json"
-        )
+        api_url = f"https://pypi.org/pypi/{quote(normalized_package)}/{quote(version)}/json"
         try:
             response = self.client.get(api_url)
             response.raise_for_status()

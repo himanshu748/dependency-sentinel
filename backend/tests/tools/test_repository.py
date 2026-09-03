@@ -90,4 +90,3 @@ def test_repository_inspector_rejects_symlink_escape(tmp_path: Path) -> None:
 
     with pytest.raises(RepositoryBoundaryError, match="outside the configured root"):
         inspect_repository(root / "linked-project", allowed_root=root)
-

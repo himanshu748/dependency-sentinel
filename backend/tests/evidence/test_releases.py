@@ -50,4 +50,3 @@ def test_pypi_provider_maps_package_metadata_to_release_evidence() -> None:
     assert release.package == "jinja2"
     assert release.version == "3.1.5"
     assert release.source.url == "https://pypi.org/project/jinja2/3.1.5/"
-

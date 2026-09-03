@@ -5,9 +5,7 @@ from httpx import ASGITransport, AsyncClient
 @pytest.mark.asyncio
 async def test_create_poll_and_idempotently_retry_run(api_app) -> None:
     repository = api_app.state.test_repository
-    async with AsyncClient(
-        transport=ASGITransport(app=api_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
         first = await client.post(
             "/api/runs",
             json={"repository": str(repository)},
@@ -34,9 +32,7 @@ async def test_idempotency_key_cannot_be_reused_for_another_repository(api_app, 
     repository = api_app.state.test_repository
     other = tmp_path / "other"
     other.mkdir()
-    async with AsyncClient(
-        transport=ASGITransport(app=api_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
         await client.post(
             "/api/runs",
             json={"repository": str(repository)},
@@ -55,17 +51,13 @@ async def test_idempotency_key_cannot_be_reused_for_another_repository(api_app, 
 @pytest.mark.asyncio
 async def test_event_stream_contains_ordered_sse_records(api_app) -> None:
     repository = api_app.state.test_repository
-    async with AsyncClient(
-        transport=ASGITransport(app=api_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
         created = await client.post(
             "/api/runs",
             json={"repository": str(repository)},
             headers={"Idempotency-Key": "stream-run"},
         )
-        response = await client.get(
-            f"/api/runs/{created.json()['run']['id']}/events/stream"
-        )
+        response = await client.get(f"/api/runs/{created.json()['run']['id']}/events/stream")
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/event-stream")
@@ -79,15 +71,11 @@ async def test_event_stream_contains_ordered_sse_records(api_app) -> None:
 async def test_repository_inspection_endpoint_uses_boundary(api_app, tmp_path) -> None:
     repository = api_app.state.test_repository
     outside = tmp_path.parent
-    async with AsyncClient(
-        transport=ASGITransport(app=api_app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
         accepted = await client.post(
             "/api/repositories/inspect", json={"repository": str(repository)}
         )
-        rejected = await client.post(
-            "/api/repositories/inspect", json={"repository": str(outside)}
-        )
+        rejected = await client.post("/api/repositories/inspect", json={"repository": str(outside)})
 
     assert accepted.status_code == 200
     assert accepted.json()["head"]

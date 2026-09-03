@@ -151,9 +151,7 @@ class DependencyUpgradeWorkflow:
         advisories = self.advisory_provider.advisories_for(
             candidate.package, candidate.current_version
         )
-        release = self.release_provider.release_for(
-            candidate.package, candidate.target_version
-        )
+        release = self.release_provider.release_for(candidate.package, candidate.target_version)
         self._event(
             run.id,
             kind="evidence_collected",

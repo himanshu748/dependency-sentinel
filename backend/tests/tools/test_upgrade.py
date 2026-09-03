@@ -27,8 +27,8 @@ def test_stage_python_upgrade_changes_manifest_and_lockfile(tmp_path: Path) -> N
     assert change.changed_files == [Path("pyproject.toml"), Path("uv.lock")]
     assert '"jinja2==3.1.5"' in (tmp_path / "pyproject.toml").read_text()
     assert 'version = "3.1.5"' in (tmp_path / "uv.lock").read_text()
-    assert "-  \"jinja2==3.1.4\"" in change.diff
-    assert "+  \"jinja2==3.1.5\"" in change.diff
+    assert '-  "jinja2==3.1.4"' in change.diff
+    assert '+  "jinja2==3.1.5"' in change.diff
 
 
 def test_stage_python_upgrade_rejects_unknown_package(tmp_path: Path) -> None:

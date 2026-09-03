@@ -32,4 +32,3 @@ def test_manifest_scanner_rejects_missing_project_metadata(tmp_path: Path) -> No
 
     with pytest.raises(ManifestError, match="pyproject.toml"):
         scan_python_manifest(tmp_path)
-

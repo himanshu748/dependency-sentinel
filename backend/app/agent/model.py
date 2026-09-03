@@ -18,6 +18,7 @@ def create_strands_agent(
         model_id=model_id,
         region_name=region_name,
         temperature=0.0,
+        max_tokens=512,
     )
     return Agent(
         name="dependency_sentinel",
