@@ -12,7 +12,10 @@ interface Props {
 }
 
 export function RiskQueue({ dependencies, candidate }: Props) {
-  const ordered = [...dependencies].sort((item) => (item.name === candidate.package ? -1 : 1));
+  const ordered = [...dependencies].sort((left, right) => {
+    const candidateOrder = Number(right.name === candidate.package) - Number(left.name === candidate.package);
+    return candidateOrder || left.name.localeCompare(right.name);
+  });
   return (
     <aside className="risk-queue" aria-label="Risk queue">
       <h2>Risk queue <span>({ordered.length})</span></h2>

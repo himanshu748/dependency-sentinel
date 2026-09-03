@@ -118,6 +118,7 @@ const events = [
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  window.localStorage.removeItem("dependency-sentinel-theme");
   delete document.documentElement.dataset.theme;
 });
 
@@ -166,6 +167,10 @@ describe("Dependency Sentinel", () => {
     expect(screen.getByText("2 passed")).toBeInTheDocument();
     expect(screen.getByText("Source checkout unchanged")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Approve validated patch" })).toBeEnabled();
+    expect(document.activeElement).toHaveAttribute("aria-labelledby", "approval-title");
+    expect(screen.getByText("Evidence").parentElement).toHaveTextContent("3");
+    const queueItems = screen.getByRole("complementary", { name: "Risk queue" }).querySelectorAll("li");
+    expect(queueItems[0]).toHaveTextContent("jinja2");
   });
 
   it("submits the exact approval gate and shows completion", async () => {

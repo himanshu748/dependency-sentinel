@@ -1,8 +1,10 @@
 export function DiffViewer({ diff }: { diff: string }) {
   const lines = diff.split("\n").filter(Boolean);
+  const gitHeaders = lines.filter((line) => line.startsWith("diff --git ")).length;
+  const changedFiles = gitHeaders || new Set(lines.filter((line) => line.startsWith("+++ b/")).map((line) => line.slice(6))).size;
   return (
     <details className="diff-panel" open>
-      <summary>Proposed changes <span>2 files</span></summary>
+      <summary>Proposed changes <span>{changedFiles} {changedFiles === 1 ? "file" : "files"}</span></summary>
       <pre aria-label="Proposed dependency diff">
         {lines.map((line, index) => {
           const type = line.startsWith("+") && !line.startsWith("+++")

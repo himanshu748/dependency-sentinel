@@ -106,7 +106,14 @@ npm test -- --run
 npm run build
 ```
 
-The checked-in fixture test asserts that validation runs against the staged Jinja2 3.1.5 manifest and lockfile. Browser QA covers 360, 768, 1024 and 1440 px layouts, both themes, the approval flow and source-checkout immutability.
+End-to-end:
+
+```bash
+cd frontend
+npm run test:e2e
+```
+
+The checked-in fixture test asserts that validation runs against the staged Jinja2 3.1.5 manifest and lockfile. Playwright verifies the real Vite application in desktop Chromium and a Pixel 7 viewport, including persisted theme behavior. See [the verification record](docs/VERIFICATION.md).
 
 | Desktop | Mobile timeline | Mobile approval |
 | --- | --- | --- |

@@ -21,10 +21,11 @@ interface Release {
 export function EvidencePanel({ event }: { event?: RunEvent }) {
   const advisories = (event?.payload.advisories as Advisory[] | undefined) || [];
   const release = event?.payload.release as Release | undefined;
+  const evidenceCount = advisories.length + Number(Boolean(advisories[0]?.source)) + Number(Boolean(release));
   return (
     <details className="evidence-panel" open>
       <summary>
-        Evidence <span>{advisories.length * 2 + (release ? 1 : 0)}</span>
+        Evidence <span>{evidenceCount}</span>
       </summary>
       <div className="evidence-list">
         {advisories.map((advisory) => (

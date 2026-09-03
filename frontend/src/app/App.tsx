@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { createRun, decideApproval, getEvents } from "../api/client";
 import type { CandidateSelection, RunEnvelope, RunEvent } from "../api/types";
@@ -9,6 +9,7 @@ import { RepositoryHeader } from "../features/repository/RepositoryHeader";
 import { RiskQueue } from "../features/risk/RiskQueue";
 import { ExecutionTimeline } from "../features/run/ExecutionTimeline";
 import { ShieldIcon } from "../ui/Icons";
+import { applyTheme, getInitialTheme, type Theme } from "../ui/theme";
 
 type ViewState = "idle" | "scanning" | "paused" | "deciding" | "completed" | "rejected" | "error";
 
@@ -29,7 +30,9 @@ export function App() {
   const [outcome, setOutcome] = useState<RunEnvelope | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState("");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  useEffect(() => applyTheme(theme), [theme]);
 
   const snapshot = eventOf(events, "repository_inspected")?.payload;
   const candidate = outcome?.candidate;
@@ -77,9 +80,7 @@ export function App() {
   }
 
   function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    document.documentElement.dataset.theme = nextTheme;
-    setTheme(nextTheme);
+    setTheme((current) => current === "light" ? "dark" : "light");
   }
 
   return (

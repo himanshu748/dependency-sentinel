@@ -172,7 +172,7 @@
   .evidence-column { order: 2; display: block; border-top: 0; }
   .evidence-column > * { margin: 0 14px 12px; border: 1px solid var(--rule); background: var(--surface); }
   .evidence-panel:not([open]) .evidence-list, .diff-panel:not([open]) pre { display: none; }
-  .validation-output { display: none; }
+  .validation-output pre { min-height: 0; max-height: 180px; }
 }
 
 @media (max-width: 400px) {

@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import { LockIcon } from "../../ui/Icons";
 
 interface Props {
@@ -6,8 +8,10 @@ interface Props {
 }
 
 export function ApprovalGate({ busy, onDecision }: Props) {
+  const gateRef = useRef<HTMLElement>(null);
+  useEffect(() => gateRef.current?.focus(), []);
   return (
-    <section className="approval-gate" aria-labelledby="approval-title">
+    <section className="approval-gate" aria-labelledby="approval-title" ref={gateRef} tabIndex={-1}>
       <LockIcon />
       <div>
         <h3 id="approval-title">Approval gate</h3>
