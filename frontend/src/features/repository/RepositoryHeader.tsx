@@ -1,6 +1,7 @@
 import { BranchIcon, CommitIcon, PlayIcon, RepositoryIcon, ThemeIcon } from "../../ui/Icons";
 
 interface Props {
+  onBack: () => void;
   repository: string;
   onRepositoryChange: (value: string) => void;
   onScan: () => void;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function RepositoryHeader({
+  onBack,
   repository,
   onRepositoryChange,
   onScan,
@@ -63,6 +65,7 @@ export function RepositoryHeader({
           {isScanning ? "Scanning repository…" : retry ? "Retry scan" : "Scan repository"}
         </button>
       </form>
+      <button type="button" className="nav-action subtle" onClick={onBack}>Back to overview</button>
       <button
         type="button"
         className="theme-action"

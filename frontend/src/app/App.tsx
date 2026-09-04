@@ -5,13 +5,15 @@ import type { CandidateSelection, RunEnvelope, RunEvent } from "../api/types";
 import { ApprovalGate } from "../features/approval/ApprovalGate";
 import { DiffViewer } from "../features/diff/DiffViewer";
 import { EvidencePanel } from "../features/evidence/EvidencePanel";
+import { Landing } from "../features/landing/Landing";
 import { RepositoryHeader } from "../features/repository/RepositoryHeader";
 import { RiskQueue } from "../features/risk/RiskQueue";
 import { ExecutionTimeline } from "../features/run/ExecutionTimeline";
-import { ShieldIcon } from "../ui/Icons";
+import { ShieldIcon, ThemeIcon } from "../ui/Icons";
 import { applyTheme, getInitialTheme, type Theme } from "../ui/theme";
 
 type ViewState = "idle" | "scanning" | "paused" | "deciding" | "completed" | "rejected" | "error";
+type Surface = "landing" | "demo";
 
 const defaultRepository = import.meta.env.VITE_DEMO_REPOSITORY || "/tmp/dependency-sentinel-demo";
 
@@ -25,6 +27,7 @@ function dependencies(events: RunEvent[]) {
 }
 
 export function App() {
+  const [surface, setSurface] = useState<Surface>("landing");
   const [repository, setRepository] = useState(defaultRepository);
   const [state, setState] = useState<ViewState>("idle");
   const [outcome, setOutcome] = useState<RunEnvelope | null>(null);
@@ -83,9 +86,35 @@ export function App() {
     setTheme((current) => current === "light" ? "dark" : "light");
   }
 
+  if (surface === "landing") {
+    return (
+      <div className="app-shell console-shell">
+        <header className="console-topbar">
+          <a className="console-wordmark" href="#main"><ShieldIcon /><h1>Dependency Sentinel</h1></a>
+          <nav className="console-nav" aria-label="Section navigation">
+            <a href="#pipeline-title">Pipeline</a>
+            <a href="#architecture-title">Architecture</a>
+            <a href="#invariants-title">Invariants</a>
+          </nav>
+          <button type="button" className="nav-action" onClick={() => setSurface("demo")}>Try the demo</button>
+          <button
+            type="button"
+            className="theme-action"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+          >
+            <ThemeIcon />
+          </button>
+        </header>
+        <Landing onStart={() => setSurface("demo")} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <RepositoryHeader
+        onBack={() => setSurface("landing")}
         repository={repository}
         onRepositoryChange={setRepository}
         onScan={scan}

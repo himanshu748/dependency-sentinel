@@ -4,7 +4,7 @@ Dependency Sentinel is an evidence-first maintenance agent for the Professional 
 
 It never edits the selected source checkout.
 
-![Dependency Sentinel approval console](docs/screenshots/desktop-approval.png)
+![Dependency Sentinel public landing page](docs/screenshots/landing-desktop.png)
 
 ## Why this project
 
@@ -113,11 +113,11 @@ cd frontend
 npm run test:e2e
 ```
 
-The checked-in fixture test asserts that validation runs against the staged Jinja2 3.1.5 manifest and lockfile. Playwright verifies the real Vite application in desktop Chromium and a Pixel 7 viewport, including persisted theme behavior. See [the verification record](docs/VERIFICATION.md).
+The checked-in fixture test asserts that validation runs against the staged Jinja2 3.1.5 manifest and lockfile. Nine frontend interaction tests pass. Four Playwright checks verify the real Vite application in desktop Chromium and a Pixel 7 viewport, including landing-to-demo navigation, persisted theme behavior, and no horizontal overflow at 390, 768, and 1440 pixel widths. See [the verification record](docs/VERIFICATION.md).
 
-| Desktop | Mobile timeline | Mobile approval |
-| --- | --- | --- |
-| [Approval console](docs/screenshots/desktop-approval.png) | [Timeline](docs/screenshots/mobile-timeline.png) | [Approval and evidence](docs/screenshots/mobile-approval.png) |
+| Landing | Mobile landing | Approval console | Mobile evidence |
+| --- | --- | --- | --- |
+| [Desktop](docs/screenshots/landing-desktop.png) | [Mobile](docs/screenshots/landing-mobile.png) | [Desktop](docs/screenshots/desktop-approval.png) | [Timeline](docs/screenshots/mobile-timeline.png) and [approval](docs/screenshots/mobile-approval.png) |
 
 ## Safety properties
 

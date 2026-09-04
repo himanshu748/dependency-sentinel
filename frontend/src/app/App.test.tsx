@@ -122,9 +122,45 @@ afterEach(() => {
   delete document.documentElement.dataset.theme;
 });
 
+function openDemo() {
+  render(<App />);
+  fireEvent.click(screen.getAllByRole("button", { name: "Try the demo" })[0]);
+}
+
+describe("Dependency Sentinel landing", () => {
+  it("opens on the console landing page with navigation and a primary call to action", () => {
+    render(<App />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Dependency Sentinel" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /One upgrade\. Full evidence/ })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Pipeline" })).toHaveAttribute("href", "#pipeline-title");
+    expect(screen.getAllByRole("button", { name: "Try the demo" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("No maintenance run yet")).not.toBeInTheDocument();
+  });
+
+  it("states the six-stage pipeline, the stack and the safety invariants truthfully", () => {
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: /How the agent works/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Safety invariants/ })).toBeInTheDocument();
+    expect(screen.getByText(/does not claim an Amazon Bedrock AgentCore deployment/)).toBeInTheDocument();
+    expect(screen.getByText(/Fixture mode is the default/)).toBeInTheDocument();
+    expect(screen.getByText(/never in your checkout/)).toBeInTheDocument();
+  });
+
+  it("moves between the landing page and the demo console", () => {
+    openDemo();
+    expect(screen.getByText("No maintenance run yet")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to overview" }));
+    expect(screen.getByRole("heading", { name: /One upgrade\. Full evidence/ })).toBeInTheDocument();
+  });
+});
+
 describe("Dependency Sentinel", () => {
   it("renders a useful empty state and repository scan action", () => {
-    render(<App />);
+    openDemo();
 
     expect(screen.getByRole("heading", { name: "Dependency Sentinel" })).toBeInTheDocument();
     expect(screen.getByLabelText("Repository path")).toBeInTheDocument();
@@ -133,7 +169,7 @@ describe("Dependency Sentinel", () => {
   });
 
   it("supports an explicit accessible dark theme toggle", () => {
-    render(<App />);
+    openDemo();
 
     fireEvent.click(screen.getByRole("button", { name: "Switch to dark theme" }));
 
@@ -157,7 +193,7 @@ describe("Dependency Sentinel", () => {
         }),
       );
     vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
+    openDemo();
 
     fireEvent.click(screen.getByRole("button", { name: "Scan repository" }));
 
@@ -181,7 +217,7 @@ describe("Dependency Sentinel", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify(events), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(completedRun), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
+    openDemo();
     fireEvent.click(screen.getByRole("button", { name: "Scan repository" }));
     await screen.findByText("Approval required");
 
@@ -207,7 +243,7 @@ describe("Dependency Sentinel", () => {
         ),
       ),
     );
-    render(<App />);
+    openDemo();
 
     fireEvent.click(screen.getByRole("button", { name: "Scan repository" }));
 
