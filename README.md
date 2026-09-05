@@ -17,6 +17,18 @@ Routine dependency upgrades combine security research, release verification, sou
 5. The run pauses at a persisted approval gate.
 6. Approval records the reviewed result. It does not silently modify the source checkout or publish anything.
 
+## One-command judging demo
+
+Prerequisites: Python 3.11+, uv, Node.js 20.19+ (22.12+ recommended), npm, Git and Bash.
+
+```bash
+python3 scripts/demo.py
+```
+
+Open `http://127.0.0.1:8000`. This installs locked dependencies, builds the frontend, and serves the UI and API from one local process. It forces scripted fixture mode even if your environment enables AWS, uses temporary demo data, and removes that data when stopped with Ctrl+C. First-time dependency installation needs internet access; the demo itself does not call a model. Use `--port 8201` to avoid a port conflict. After installation, `--skip-install` reuses dependencies.
+
+This is a local judging build, not a public hosted service. Live Bedrock inference and AgentCore deployment remain unverified.
+
 ## Architecture
 
 ```mermaid
@@ -119,6 +131,12 @@ The checked-in fixture test asserts that validation runs against the staged Jinj
 | --- | --- | --- | --- |
 | [Desktop](docs/screenshots/landing-desktop.png) | [Mobile](docs/screenshots/landing-mobile.png) | [Desktop](docs/screenshots/desktop-approval.png) | [Timeline](docs/screenshots/mobile-timeline.png) and [approval](docs/screenshots/mobile-approval.png) |
 
+## Hackathon technology and outstanding requirements
+
+The free demo now executes a real Strands Agent using a scripted model provider, including tool dispatch and structured output. Live mode uses Amazon Bedrock directly or the optional AgentCore advisory service, which accepts a locked dependency snapshot and returns a candidate for independent local verification. See [AgentCore setup](docs/AGENTCORE.md).
+
+The backend suite now passes 59 tests. The [qualification record](docs/QUALIFICATION.md) documents remaining publication and account requirements. The [architecture PNG](docs/architecture.png), [Builder Center article draft](docs/BUILDER_POST.md) and [demo video outline](docs/DEMO_SCRIPT.md) are prepared. An article draft does not earn bonus points until it is publicly published on Builder Center.
+
 ## Safety properties
 
 - Repository paths are canonicalized and constrained to an allowed root
@@ -132,7 +150,7 @@ The checked-in fixture test asserts that validation runs against the staged Jinj
 
 ## Development disclosure
 
-Himanshu Jha is the solo entrant. Codex is used as an AI coding assistant for implementation, testing and documentation. Product decisions, verification and submission responsibility remain with the entrant.
+Himanshu Kumar is the solo entrant. Codex assisted implementation, testing and documentation; Claude Desktop assisted the landing-page implementation. Product decisions and submission responsibility remain with the entrant.
 
 ## License
 

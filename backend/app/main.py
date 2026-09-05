@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.agent.model import StrandsCandidateSelector, create_strands_agent
+from app.agent.model import (
+    AgentCoreCandidateSelector,
+    StrandsCandidateSelector,
+    create_strands_agent,
+)
 from app.agent.orchestrator import DependencyUpgradeWorkflow, FixtureCandidateSelector
 from app.agent.tools import build_read_only_tools
 from app.api.approvals import create_approvals_router
@@ -44,7 +48,7 @@ def create_app(
             advisory_provider = evidence
             release_provider = evidence
         else:
-            if active_settings.bedrock_model_id is None:
+            if not active_settings.bedrock_model_id and not active_settings.agentcore_runtime_arn:
                 raise ValueError("BEDROCK_MODEL_ID is required when fixture mode is disabled")
             advisory_provider = OsvAdvisoryProvider()
             release_provider = PypiReleaseProvider()
@@ -53,12 +57,17 @@ def create_app(
                 advisory_provider=advisory_provider,
                 release_provider=release_provider,
             )
-            agent = create_strands_agent(
-                model_id=active_settings.bedrock_model_id,
-                region_name=active_settings.aws_region,
-                tools=tools,
-            )
-            selector = StrandsCandidateSelector(agent)
+            if active_settings.agentcore_runtime_arn:
+                selector = AgentCoreCandidateSelector(
+                    active_settings.agentcore_runtime_arn, active_settings.aws_region
+                )
+            else:
+                agent = create_strands_agent(
+                    model_id=active_settings.bedrock_model_id,
+                    region_name=active_settings.aws_region,
+                    tools=tools,
+                )
+                selector = StrandsCandidateSelector(agent)
         runner = CommandRunner(
             allowed_root=workspace_root,
             timeout_seconds=active_settings.command_timeout_seconds,
@@ -93,6 +102,17 @@ def create_app(
             "fixture_mode": active_settings.fixture_mode,
             "model_configured": bool(active_settings.bedrock_model_id),
         }
+
+    if active_settings.serve_frontend:
+        from pathlib import Path
+
+        from app.web import mount_demo_ui
+
+        mount_demo_ui(
+            application,
+            fixture_mode=active_settings.fixture_mode,
+            directory=Path(__file__).resolve().parents[2] / "frontend" / "dist",
+        )
 
     return application
 

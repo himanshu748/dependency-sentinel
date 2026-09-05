@@ -1,4 +1,5 @@
 .DS_Store
+.agentcore/
 .env
 .venv/
 .pytest_cache/

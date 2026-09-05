@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     )
 
     fixture_mode: bool = True
+    serve_frontend: bool = False
+    agentcore_runtime_arn: str | None = None
     database_path: Path = Path("./data/dependency-sentinel.sqlite3")
     repository_root: Path = Path("../fixtures")
     workspace_root: Path = Path("./data/workspaces")

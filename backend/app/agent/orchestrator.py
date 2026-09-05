@@ -1,6 +1,10 @@
 from pathlib import Path
 from typing import Protocol
 
+from packaging.version import Version
+from strands import tool
+
+from app.agent.fixture_model import fixture_advice
 from app.domain.models import (
     AdvisoryEvidence,
     AgentRun,
@@ -52,27 +56,41 @@ class FixtureCandidateSelector:
         advisory_provider: object,
     ) -> CandidateSelection:
         del repository
-        provider = advisory_provider
-        if not hasattr(provider, "advisories_for"):
-            raise ValueError("advisory provider does not implement advisories_for")
-        for dependency in manifest.dependencies:
-            if dependency.resolved_version is None:
-                continue
-            advisories = provider.advisories_for(dependency.name, dependency.resolved_version)
-            for advisory in advisories:
-                if advisory.fixed_versions:
-                    return CandidateSelection(
-                        package=dependency.name,
-                        current_version=dependency.resolved_version,
-                        target_version=advisory.fixed_versions[0],
-                        advisory_identifier=advisory.identifier,
-                        rationale=(
-                            f"{advisory.identifier} affects {dependency.name} "
-                            f"{dependency.resolved_version} and is fixed in "
-                            f"{advisory.fixed_versions[0]}."
-                        ),
-                    )
-        raise ValueError("no evidence-backed dependency upgrade is available")
+
+        @tool
+        def fixture_candidate(payload: dict) -> dict:
+            """Read locked dependencies and fixture advisories to select a supported upgrade."""
+            return _fixture_candidate(
+                PythonManifest.model_validate(payload), advisory_provider
+            ).model_dump(mode="json")
+
+        return fixture_advice(
+            manifest.model_dump(mode="json"), fixture_candidate, CandidateSelection
+        )
+
+
+def _fixture_candidate(manifest: PythonManifest, advisory_provider: object) -> CandidateSelection:
+    provider = advisory_provider
+    if not hasattr(provider, "advisories_for"):
+        raise ValueError("advisory provider does not implement advisories_for")
+    for dependency in manifest.dependencies:
+        if dependency.resolved_version is None:
+            continue
+        advisories = provider.advisories_for(dependency.name, dependency.resolved_version)
+        for advisory in advisories:
+            if advisory.fixed_versions:
+                return CandidateSelection(
+                    package=dependency.name,
+                    current_version=dependency.resolved_version,
+                    target_version=advisory.fixed_versions[0],
+                    advisory_identifier=advisory.identifier,
+                    rationale=(
+                        f"{advisory.identifier} affects {dependency.name} "
+                        f"{dependency.resolved_version} and is fixed in "
+                        f"{advisory.fixed_versions[0]}."
+                    ),
+                )
+    raise ValueError("no evidence-backed dependency upgrade is available")
 
 
 class DependencyUpgradeWorkflow:
@@ -151,7 +169,27 @@ class DependencyUpgradeWorkflow:
         advisories = self.advisory_provider.advisories_for(
             candidate.package, candidate.current_version
         )
+        if not any(
+            dependency.name == candidate.package
+            and dependency.resolved_version == candidate.current_version
+            for dependency in manifest.dependencies
+        ):
+            raise ValueError("Selected dependency is not in the locked manifest")
+        supporting = [
+            item
+            for item in advisories
+            if item.identifier == candidate.advisory_identifier
+            and item.package == candidate.package
+            and item.affected_version == candidate.current_version
+            and candidate.target_version in item.fixed_versions
+        ]
+        if not supporting or Version(candidate.target_version) <= Version(
+            candidate.current_version
+        ):
+            raise ValueError("Selected upgrade is not supported by its advisory")
         release = self.release_provider.release_for(candidate.package, candidate.target_version)
+        if release.package != candidate.package or release.version != candidate.target_version:
+            raise ValueError("Release evidence does not match the selected upgrade")
         self._event(
             run.id,
             kind="evidence_collected",

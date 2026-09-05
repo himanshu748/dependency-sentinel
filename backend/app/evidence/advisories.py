@@ -1,6 +1,8 @@
 from typing import Any
 
 import httpx
+from packaging.utils import canonicalize_name
+from packaging.version import Version
 
 from app.domain.models import AdvisoryEvidence, EvidenceSource, utc_now
 from app.evidence.common import EvidenceUnavailable
@@ -39,6 +41,11 @@ class OsvAdvisoryProvider:
         summary = str(vulnerability.get("summary", "No summary supplied by OSV"))
         fixed_versions: set[str] = set()
         for affected in vulnerability.get("affected", []):
+            affected_package = affected.get("package", {})
+            if affected_package.get("ecosystem") != "PyPI" or canonicalize_name(
+                affected_package.get("name", "")
+            ) != canonicalize_name(package):
+                continue
             for version_range in affected.get("ranges", []):
                 for event in version_range.get("events", []):
                     if event.get("fixed"):
@@ -59,7 +66,7 @@ class OsvAdvisoryProvider:
             identifier=identifier,
             package=package.lower(),
             affected_version=version,
-            fixed_versions=sorted(fixed_versions),
+            fixed_versions=sorted(fixed_versions, key=Version),
             summary=summary,
             severity=severity,
             source=EvidenceSource(

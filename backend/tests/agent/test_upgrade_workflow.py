@@ -2,6 +2,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from app.agent.orchestrator import DependencyUpgradeWorkflow, FixtureCandidateSelector
 from app.domain.models import CommandResult, RunStatus
 from app.evidence.fixtures import FixtureEvidenceStore
@@ -109,3 +111,27 @@ def test_validation_failure_stops_before_approval(tmp_path: Path) -> None:
     assert outcome.run.status is RunStatus.FAILED
     assert outcome.approval_id is None
     assert "approval_required" not in [event.kind for event in store.list_events(outcome.run.id)]
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        {"advisory_identifier": "invented-advisory"},
+        {"current_version": "0.0.1"},
+        {"target_version": "99.0.0"},
+    ],
+)
+def test_untrusted_candidate_cannot_reach_worktree(tmp_path, changed):
+    repository = seeded_repository(tmp_path)
+    service, store = workflow(tmp_path, runner=PassingRunner())
+
+    class InvalidSelector:
+        def select(self, repository, manifest, advisory_provider):
+            candidate = FixtureCandidateSelector().select(repository, manifest, advisory_provider)
+            return candidate.model_copy(update=changed)
+
+    service.selector = InvalidSelector()
+    with pytest.raises(ValueError):
+        service.start(repository, run_id="run-invalid")
+    assert "upgrade_staged" not in [event.kind for event in store.list_events("run-invalid")]
+    assert git(repository, "status", "--porcelain=v1") == ""

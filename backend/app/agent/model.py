@@ -4,7 +4,9 @@ from typing import Any
 from strands import Agent
 from strands.models import BedrockModel
 
+from app.agent.budget import ModelCallBudget, isolated_agent
 from app.agent.prompts import SYSTEM_PROMPT, candidate_prompt
+from app.agent.runtime_client import RuntimeClient
 from app.domain.models import CandidateSelection, PythonManifest
 
 
@@ -27,6 +29,7 @@ def create_strands_agent(
         tools=list(tools),
         system_prompt=SYSTEM_PROMPT,
         callback_handler=None,
+        hooks=[ModelCallBudget()],
     )
 
 
@@ -41,10 +44,24 @@ class StrandsCandidateSelector:
         advisory_provider: object,
     ) -> CandidateSelection:
         del manifest, advisory_provider
-        result = self.agent(
+        agent = isolated_agent(self.agent)
+        self.last_run_agent = agent
+        result = agent(
             candidate_prompt(repository),
             structured_output_model=CandidateSelection,
         )
         if not isinstance(result.structured_output, CandidateSelection):
             raise ValueError("Strands agent did not return a dependency candidate")
         return result.structured_output
+
+
+class AgentCoreCandidateSelector:
+    def __init__(self, arn: str, region: str):
+        self.runtime = RuntimeClient(arn, region)
+
+    def select(
+        self, repository: str, manifest: PythonManifest, advisory_provider: object
+    ) -> CandidateSelection:
+        return CandidateSelection.model_validate(
+            self.runtime.invoke(manifest.model_dump(mode="json"))
+        )
