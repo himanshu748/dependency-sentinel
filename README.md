@@ -171,7 +171,7 @@ The local fixture demo executes Strands with a scripted model. The real AgentCor
 approval on one owned fixture. Public full-app hosting and credential-free judge access
 are verified for the included repository. See [hosted access](docs/HOSTED.md).
 
-The [hosted architecture PNG](docs/architecture-hosted.png) documents the deployed build. The [narrated hosted walkthrough](https://youtu.be/yDMl3mwFURk) is public on YouTube. The final Devpost submission and optional Builder article publication remain separate, unverified steps.
+The [hosted architecture PNG](docs/architecture-hosted.png) documents the deployed build. The [narrated hosted walkthrough](https://youtu.be/yDMl3mwFURk) is public on YouTube. The [Devpost entry](https://devpost.com/software/dependency-sentinel-df6jxp) is submitted, and the [AWS Builder build article](https://builder.aws.com/content/3J8yKu70D1ICjr4Mtr0JEAxmz8u/agents-for-humans-building-dependency-sentinel-around-reviewable-upgrades) is publicly published and linked in the submission. These publication states were verified on September 10, 2026.
 
 ## Safety properties
 
