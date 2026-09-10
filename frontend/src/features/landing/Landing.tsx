@@ -45,6 +45,7 @@ const INVARIANTS = [
 ];
 
 export function Landing({ onStart }: { onStart: () => void }) {
+  const hosted = import.meta.env.VITE_HOSTED === "true";
   return (
     <main id="main" className="console-landing">
       <section className="console-hero" aria-labelledby="hero-title">
@@ -63,8 +64,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
           <p className="hero-note">
             <ShieldIcon />
             <span>
-              Fixture mode is the default. The full workflow runs locally with no AWS account, no
-              model spend and no calls to any advisory or package registry.
+              {hosted ? "Try the included repository with real AI, live advisory data and package tests. No account or API key needed. Your own trusted repositories are supported in the local build." : "Fixture mode is the default. The full workflow runs locally with no AWS account, no model spend and no calls to any advisory or package registry."}
             </span>
           </p>
         </div>
@@ -130,15 +130,13 @@ export function Landing({ onStart }: { onStart: () => void }) {
               typed, read-only tools.
             </p>
             <p>
-              Live mode is opt-in: use <strong>Amazon Bedrock</strong> or a tool-capable
-              OpenAI-compatible endpoint, plus OSV advisory data and PyPI release data.
+              {hosted ? "This hosted build uses Groq through AWS AgentCore, with OSV advisory data and PyPI release data. " : "Live mode is opt-in: use Amazon Bedrock or a tool-capable OpenAI-compatible endpoint, plus OSV advisory data and PyPI release data. "}
               Each model response is capped at 512 tokens; this is not a spending cap.
             </p>
             <p className="architecture-caveat">
               <WarningIcon />
               <span>
-                This repository demonstrates Strands orchestration locally. It does not claim an
-                Amazon Bedrock AgentCore deployment, and in fixture mode it contacts nothing.
+                {hosted ? "Public reviews execute only the included repository. Runs and approvals are stored on the server and tied to your browser session. No arbitrary uploaded code is executed." : "The local build defaults to recorded evidence and fixture model responses. AgentCore hosting is configured separately."}
               </span>
             </p>
           </div>

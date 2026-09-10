@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useWalkthrough } from "./useWalkthrough";
 import { BranchIcon, CheckIcon, ShieldIcon } from "../../ui/Icons";
 
 const STEPS = ["Evidence", "Diff", "Decision"] as const;
@@ -6,14 +7,15 @@ const STEPS = ["Evidence", "Diff", "Decision"] as const;
 export function InteractivePreview() {
   const [stage, setStage] = useState(1);
   const [decision, setDecision] = useState<"approved" | "rejected" | null>(null);
+  const tour = useWalkthrough(setStage);
   return (
-    <aside className="hero-readout interactive-preview" aria-label="Illustrative dependency review">
+    <aside ref={tour.preview} className="hero-readout interactive-preview" aria-label="Illustrative dependency review">
       <div className="readout-head"><BranchIcon /><span>Illustrative preview · fixture workflow</span></div>
-      <div className="patch-preview-title"><h3>A patch you can inspect.</h3><span>Explore the review. Nothing runs or writes.</span></div>
+      <div className="patch-preview-title"><div><h3>A patch you can inspect.</h3><span>Explore the review. Nothing runs or writes.</span></div><button className="walkthrough-play" type="button" onClick={() => { setDecision(null); tour.play(); }} aria-pressed={tour.playing}>{tour.playing ? "Pause walkthrough" : "Play walkthrough"}</button></div>
       <div className="review-switcher" role="group" aria-label="Explore the example review">
-        {STEPS.map((step, index) => <button key={step} type="button" aria-pressed={stage === index} aria-controls="review-preview-panel" onClick={() => setStage(index)}><span aria-hidden="true">0{index + 1}</span>{step}</button>)}
+        {STEPS.map((step, index) => <button key={step} type="button" aria-pressed={stage === index} aria-controls="review-preview-panel" onClick={() => { tour.stop(); setStage(index); }}><span aria-hidden="true">0{index + 1}</span>{step}</button>)}
       </div>
-      <div id="review-preview-panel" className="review-preview-panel">
+      <div id="review-preview-panel" className="review-preview-panel" aria-live="polite">
         <div key={stage} className="review-panel-content">
           {stage === 0 && <div className="example-evidence">
             <p className="example-file">advisory / illustrative only</p>

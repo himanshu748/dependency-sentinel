@@ -72,9 +72,11 @@ def test_secret_is_redacted_and_blank_key_rejected():
         validate_provider_configuration(external(llm_api_key="   "))
 
 
-def test_external_cannot_masquerade_as_agentcore():
-    with pytest.raises(ValueError, match="AgentCore currently requires"):
-        validate_provider_configuration(external(agentcore_runtime_arn="runtime-placeholder"))
+def test_agentcore_caller_does_not_need_the_remote_provider_key():
+    settings = external(agentcore_runtime_arn="runtime-placeholder", llm_api_key=None)
+    validate_provider_configuration(settings)
+    with pytest.raises(ValueError, match="explicit direct-inference"):
+        create_provider_model(settings)
 
 
 def test_provider_is_explicit():

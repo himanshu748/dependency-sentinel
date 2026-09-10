@@ -137,3 +137,107 @@ def test_status_is_read_only(tmp_path, monkeypatch):
     monkeypatch.setattr(deployment.boto3, "client", client)
     deployment.status()
     assert json.loads(state.read_text()) == {"id": "test_runtime", "region": "us-east-1"}
+
+
+class ExternalAWS:
+    def __init__(self):
+        self.clients = []
+        self.secret_reads = 0
+
+    def client(self, name, **kwargs):
+        self.clients.append(name)
+        assert name in {"sts", "secretsmanager", "bedrock-agentcore-control"}
+        return self
+
+    def get_caller_identity(self):
+        return {"Account": "123456789012"}
+
+    def describe_secret(self, **kwargs):
+        return {"ARN": kwargs["SecretId"]}
+
+    def list_agent_runtimes(self, **kwargs):
+        assert kwargs == {"maxResults": 1}
+        return {"agentRuntimes": []}
+
+    def get_secret_value(self, **kwargs):
+        self.secret_reads += 1
+        return {"SecretString": "offline-test-secret"}
+
+
+def configure_external(monkeypatch):
+    monkeypatch.setattr(deployment, "PROVIDER", "openai-compatible")
+    monkeypatch.setattr(deployment, "MODEL", "llama-3.3-70b-versatile")
+    monkeypatch.setattr(deployment, "BASE_URL", "https://api.groq.com/openai/v1")
+    monkeypatch.setattr(
+        deployment,
+        "SECRET_ARN",
+        "arn:aws:secretsmanager:us-east-1:123456789012:secret:afh/groq-example",
+    )
+
+
+def test_external_preflight_does_not_require_bedrock_or_read_key(monkeypatch):
+    configure_external(monkeypatch)
+    aws = ExternalAWS()
+    result = deployment.preflight(aws)
+    assert result["bedrock_model_access_required"] is False
+    assert result["inference_verified"] is False
+    assert aws.secret_reads == 0
+    assert "bedrock" not in aws.clients
+    assert "service-quotas" not in aws.clients
+
+
+def test_external_preflight_rejects_foreign_secret_before_lookup(monkeypatch):
+    configure_external(monkeypatch)
+    monkeypatch.setattr(
+        deployment,
+        "SECRET_ARN",
+        "arn:aws:secretsmanager:us-east-1:999999999999:secret:wrong-account",
+    )
+    aws = ExternalAWS()
+    with pytest.raises(SystemExit, match="this account and region"):
+        deployment.preflight(aws)
+    assert aws.clients == ["sts"]
+
+
+def test_external_preflight_rejects_loopback_for_cloud(monkeypatch):
+    configure_external(monkeypatch)
+    monkeypatch.setattr(deployment, "BASE_URL", "http://localhost:9000/v1")
+    with pytest.raises(SystemExit, match="HTTPS"):
+        deployment.preflight(ExternalAWS())
+
+
+def test_external_probe_is_bounded_and_does_not_report_credentials(monkeypatch):
+    from types import SimpleNamespace
+
+    import openai
+
+    configure_external(monkeypatch)
+    monkeypatch.setenv("LLM_API_KEY", "offline-test-secret")
+    probes = []
+
+    class Provider:
+        def __init__(self, **kwargs):
+            assert kwargs["max_retries"] == 0
+            assert kwargs["api_key"] == "offline-test-secret"
+            self.chat = SimpleNamespace(completions=self)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def create(self, **kwargs):
+            probes.append(kwargs)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content="OK"))],
+                usage=SimpleNamespace(model_dump=lambda: {"total_tokens": 5}),
+            )
+
+    monkeypatch.setattr(openai, "OpenAI", Provider)
+    aws = ExternalAWS()
+    result = deployment.preflight(aws, allow_inference=True)
+    assert result["inference_verified"] is True
+    assert aws.secret_reads == 0
+    assert probes[0]["max_tokens"] == 128
+    assert "offline-test-secret" not in str(result)

@@ -2,6 +2,8 @@
 
 
 def evidence(agent, result):
+    from strands.models.openai import OpenAIModel
+
     calls = [
         block["toolUse"]["name"]
         for message in agent.messages
@@ -9,7 +11,11 @@ def evidence(agent, result):
         if "toolUse" in block
     ]
     return {
-        "engine": "strands-bedrock",
+        "engine": (
+            "strands-openai-compatible"
+            if isinstance(agent.model, OpenAIModel)
+            else "strands-bedrock"
+        ),
         "advice": result.model_dump(mode="json"),
         "tool_calls": calls,
         "usage": agent.event_loop_metrics.accumulated_usage,

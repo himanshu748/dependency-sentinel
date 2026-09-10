@@ -1,0 +1,6 @@
+.hosted-notice { display:flex; flex-wrap:wrap; gap:.35rem 1.5rem; align-items:baseline; justify-content:space-between; padding:.45rem clamp(1rem,4vw,3rem); border-bottom:1px solid var(--border, #ddd); font:400 .75rem/1.5 var(--font-sans, sans-serif); background:var(--surface, #f5f5f3); color:var(--text, #202825); }
+.hosted-notice summary { cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.hosted-notice summary:focus-visible { outline:2px solid currentColor; outline-offset:4px; border-radius:2px; }
+.hosted-notice details { max-width:34rem; min-width:0; }
+.hosted-notice details p { margin:.75rem 0; max-width:65ch; }
+.hosted-notice .hosted-provider { border-top:1px solid var(--border, #ddd); padding-top:.65rem; }

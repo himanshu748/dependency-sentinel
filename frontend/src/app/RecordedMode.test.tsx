@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { readRuntimeConfiguration } from "../features/connection/health";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
@@ -24,6 +25,7 @@ async function reopenWithMode(execution: unknown, status = "completed") {
 }
 
 it("labels a pending fixture run from its saved event even when health reports live mode", async () => {
+  vi.mocked(readRuntimeConfiguration).mockResolvedValue({ fixture_mode: false, runtime_mode: "openai-compatible", model_configured: true, evidence_mode: "live" });
   const mode = await reopenWithMode({ model_mode: "fixture", evidence_mode: "fixture" }, "waiting_for_approval");
   expect(mode).toHaveTextContent("Scripted model · Fixture advisory data");
   fireEvent.click(screen.getByRole("button", { name: "Connection details" }));

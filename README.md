@@ -1,6 +1,8 @@
 # Dependency Sentinel
 
-[Connect a model](docs/ACTIVATION.md) · [Verified Qwen workflows](docs/QWEN-VERIFICATION.md) · [Submission checklist](docs/RELEASE-CHECKLIST.md) · [Judging evidence](docs/JUDGING.md)
+[Open the hosted app](https://dependency-sentinel.34-233-68-117.sslip.io/#overview) · [Judge access and limits](docs/HOSTED.md)
+
+[Groq + AgentCore setup](docs/GROQ-AGENTCORE.md) · [Verified cloud workflow](docs/GROQ-VERIFICATION.md) · [Submission checklist](docs/RELEASE-CHECKLIST.md) · [Judging evidence](docs/JUDGING.md)
 
 For the real-input, local-first workspace and its verified limits, see [Local product workflow](LOCAL-PRODUCT.md).
 
@@ -35,11 +37,18 @@ python3 scripts/demo.py
 
 Open `http://127.0.0.1:8000`. This installs locked dependencies, builds the frontend, and serves the UI and API from one local process. It forces scripted fixture mode even if your environment enables AWS, uses temporary demo data, and removes that data when stopped with Ctrl+C. First-time dependency installation needs internet access; the demo itself does not call a model. Use `--port 8201` to avoid a port conflict. After installation, `--skip-install` reuses dependencies.
 
-This command runs the scripted model. Real Qwen3-8B inference through Strands was verified on September 9; see [the workflow evidence](docs/QWEN-VERIFICATION.md). The private Modal endpoint was then stopped at the owner's request. Bedrock and AgentCore remain unverified. A judge must not be told that this free scripted run demonstrates live inference.
+This command runs the scripted model. The real AgentCore → Strands → Groq workflow
+passed on September 10 with live OSV/PyPI evidence, an owned fixture upgrade and
+approval. See [the evidence](docs/GROQ-VERIFICATION.md). The earlier Qwen endpoint
+on Modal remains stopped. The free scripted command does not demonstrate live inference.
 
 ## Real model setup
 
-The backend supports explicit Bedrock, AgentCore, or OpenAI-compatible configuration, with no silent fallback to fixtures. [Qwen on Modal](docs/MODAL.md) documents the tested provider, authentication, spending controls and cold-start procedure. [External model configuration](docs/EXTERNAL-MODELS.md) also supports a compatible endpoint from another authorized provider.
+The backend supports explicit Bedrock, AgentCore, or OpenAI-compatible configuration,
+with no silent fallback to fixtures. Use [Groq on AgentCore](docs/GROQ-AGENTCORE.md)
+for the verified cloud route, or [external model configuration](docs/EXTERNAL-MODELS.md)
+for direct inference. The model probe below tests direct inference; use the workflow
+smoke check to verify a configured AgentCore runtime.
 
 After configuring the ignored `backend/.env`, run:
 
@@ -50,13 +59,13 @@ backend/.venv/bin/python scripts/model_workflow_smoke.py --allow-paid-requests
 backend/.venv/bin/python scripts/run.py serve --port 8000 --allow-paid-requests
 ```
 
-The last three commands require an available funded endpoint. Do not run them against a deliberately stopped service or put provider credentials in the frontend. Public hosting and free real-model access for judges still need to be arranged; bring-your-own paid credentials is not a completed judge-access plan.
+The last three commands require an available funded endpoint. Do not run them against a deliberately stopped service or put provider credentials in the frontend. Judges can use the [hosted application](docs/HOSTED.md) without supplying credentials; hosted AI has bounded daily allowances.
 
 ## Architecture
 
-![Current provider and approval architecture](docs/architecture-current.png)
+![Deployed AgentCore, Strands and Groq architecture](docs/architecture-hosted.png)
 
-[Editable SVG](docs/architecture-current.svg). Use this PNG for the submission attachment.
+[Editable SVG](docs/architecture-hosted.svg). Use this hosted-architecture PNG for the submission attachment. Older diagrams document earlier provider configurations.
 
 ```mermaid
 flowchart LR
@@ -115,7 +124,10 @@ DEPENDENCY_SENTINEL_FIXTURE_MODE=false
 
 Model advice and evidence retrieval are separate settings. `DEPENDENCY_SENTINEL_EVIDENCE_MODE=live` uses OSV/PyPI; setting fixture mode to false alone does not enable live evidence. Verify current provider access and pricing first. Response limits do not create an account-wide billing cap or guarantee credits-only spend.
 
-Live mode can use paid AWS services and public advisory APIs. Confirm your AWS budget and model access before enabling it. The current repository demonstrates Strands Agents SDK orchestration locally. It does not claim an Amazon Bedrock AgentCore deployment.
+Live mode can use paid AWS services and public advisory APIs. Confirm your budget
+and provider access before enabling it. The verified AgentCore deployment runs
+the Strands advisory step with Groq. Repository tests, approvals and durable state
+remain in the local application.
 
 ## API surface
 
@@ -154,9 +166,12 @@ Use the one-command demo for a browser walkthrough. There is no configured `npm 
 
 ## Hackathon technology and outstanding requirements
 
-The free demo executes Strands with a scripted model, including tool dispatch and structured output. Real Qwen inference was verified with recorded advisory evidence and actual fixture tests. Live OSV/PyPI evidence is a separate verification gate. Bedrock and AgentCore remain optional alternatives. See [Qwen verification](docs/QWEN-VERIFICATION.md) and [AgentCore setup](docs/AGENTCORE.md).
+The local fixture demo executes Strands with a scripted model. The real AgentCore → Strands
+→ Groq workflow passed with live OSV/PyPI evidence, resolved-package tests and
+approval on one owned fixture. Public full-app hosting and credential-free judge access
+are verified for the included repository. See [hosted access](docs/HOSTED.md).
 
-The [qualification record](docs/QUALIFICATION.md) documents remaining publication and account requirements. The [architecture PNG](docs/architecture.png), [article draft](docs/BUILDER_POST.md) and [video outline](docs/DEMO_SCRIPT.md) exist locally; publication and the final Devpost record have not been verified for this revision. An unpublished draft earns no blog bonus.
+The [hosted architecture PNG](docs/architecture-hosted.png) documents the deployed build. The [narrated hosted walkthrough](https://youtu.be/yDMl3mwFURk) is public on YouTube. The final Devpost submission and optional Builder article publication remain separate, unverified steps.
 
 ## Safety properties
 

@@ -1,4 +1,4 @@
-import { BranchIcon, CommitIcon, PlayIcon, RepositoryIcon, ThemeIcon } from "../../ui/Icons";
+import { BranchIcon, CommitIcon, PlayIcon, RepositoryIcon, ShieldIcon, ThemeIcon } from "../../ui/Icons";
 
 interface Props {
   onBack: () => void;
@@ -31,7 +31,7 @@ export function RepositoryHeader({
 }: Props) {
   return (
     <header className="repository-header">
-      <h1>Dependency Sentinel</h1>
+      <a className="repository-brand" href="#overview" onClick={(event) => { event.preventDefault(); onBack(); }}><ShieldIcon /><h1>Dependency Sentinel</h1></a>
       <div className="repository-header-actions">
         <button type="button" className="nav-action subtle" onClick={onBack}>Back to overview</button>
         <button
@@ -61,7 +61,7 @@ export function RepositoryHeader({
               autoComplete="off"
               spellCheck={false}
               required
-              disabled={isScanning}
+              disabled={isScanning || import.meta.env.VITE_HOSTED === "true"}
               placeholder="/absolute/path/to/your-python-repository"
               value={repository}
               onChange={(event) => onRepositoryChange(event.target.value)}
@@ -73,8 +73,8 @@ export function RepositoryHeader({
           <span><CommitIcon />{head.slice(0, 7)}</span>
         </div>
         <div className="trust-contract">
-          <label><input type="checkbox" checked={trusted} disabled={isScanning} onChange={(event) => onTrustedChange(event.target.checked)} aria-describedby="repository-trust-note" /> I own or trust this repository and authorize running its tests locally.</label>
-          <p id="repository-trust-note">A worktree protects your source files, not your machine. Do not run untrusted code.</p>
+          <label><input type="checkbox" checked={trusted} disabled={isScanning} onChange={(event) => onTrustedChange(event.target.checked)} aria-describedby="repository-trust-note" /> {import.meta.env.VITE_HOSTED === "true" ? "Run the included repository's tests on the hosted server." : "I own or trust this repository and authorize running its tests locally."}</label>
+          <p id="repository-trust-note">{import.meta.env.VITE_HOSTED === "true" ? "This public workspace uses an owned sample repository with live OSV/PyPI evidence and real AI. Arbitrary code execution is disabled." : "A worktree protects your source files, not your machine. Do not run untrusted code."}</p>
         </div>
         <button
           type="submit"

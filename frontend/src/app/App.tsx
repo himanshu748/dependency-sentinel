@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSurfaceNavigation } from "./useSurfaceNavigation";
 import { ConnectionDetails } from "../features/connection/ConnectionDetails";
 
 import { createRun, decideApproval, downloadReview, getEvents, getRun, listRuns, type ReviewExport } from "../api/client";
@@ -16,7 +17,6 @@ import { ShieldIcon, ThemeIcon } from "../ui/Icons";
 import { applyTheme, getInitialTheme, type Theme } from "../ui/theme";
 
 type ViewState = "idle" | "scanning" | "paused" | "deciding" | "completed" | "rejected" | "failed" | "error";
-type Surface = "landing" | "demo";
 
 const defaultRepository = import.meta.env.VITE_DEMO_REPOSITORY || "";
 
@@ -34,8 +34,9 @@ function viewFor(run: AgentRun): ViewState {
 }
 
 export function App() {
-  const [surface, setSurface] = useState<Surface>(window.location.hash === "#overview" ? "landing" : "demo");
-  const [repository, setRepository] = useState("");
+  const hosted = import.meta.env.VITE_HOSTED === "true";
+  const { surface, openSurface } = useSurfaceNavigation();
+  const [repository, setRepository] = useState(import.meta.env.VITE_HOSTED === "true" ? defaultRepository : "");
   const [trusted, setTrusted] = useState(false);
   const [saved, setSaved] = useState<AgentRun[] | null>(null);
   const [utilityBusy, setUtilityBusy] = useState(false);
@@ -56,19 +57,6 @@ export function App() {
 
   useEffect(() => applyTheme(theme), [theme]);
   useEffect(() => { setExportError(null); setExportNotice(""); }, [outcome?.run.id]);
-  useEffect(() => {
-    function syncSurface() {
-      if (window.location.hash === "#overview") setSurface("landing");
-      if (window.location.hash === "#main") setSurface("demo");
-    }
-    window.addEventListener("hashchange", syncSurface);
-    return () => window.removeEventListener("hashchange", syncSurface);
-  }, []);
-
-  function openSurface(next: Surface) {
-    setSurface(next);
-    window.history.replaceState(null, "", next === "landing" ? "#overview" : "#main");
-  }
 
   const snapshot = eventOf(events, "repository_inspected")?.payload;
   const candidate = outcome?.candidate;
@@ -184,7 +172,7 @@ export function App() {
     return (
       <div className="app-shell console-shell">
         <header className="console-topbar">
-          <a className="console-wordmark" href="#main" onClick={() => openSurface("demo")}><ShieldIcon /><h1>Dependency Sentinel</h1></a>
+          <a className="console-wordmark" href="#overview" onClick={(event) => { event.preventDefault(); openSurface("landing"); }}><ShieldIcon /><h1>Dependency Sentinel</h1></a>
           <nav className="console-nav" aria-label="Section navigation">
             <a href="#pipeline-title">Pipeline</a>
             <a href="#architecture-title">Architecture</a>
@@ -206,7 +194,7 @@ export function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell sentinel-workbench">
       <RepositoryHeader
         onBack={() => openSurface("landing")}
         repository={repository}
@@ -258,14 +246,14 @@ export function App() {
           <section className="empty-state">
           <div className="empty-instrument" aria-hidden="true"><ShieldIcon /></div>
           <h2>{state === "failed" ? "Run did not produce a patch" : "Review your next dependency upgrade"}</h2>
-          <p>{typeof failure === "string" ? failure : "Choose a local Python repository with pyproject.toml and uv.lock, then scan for one evidence-backed upgrade."}</p>
+          <p>{typeof failure === "string" ? failure : hosted ? "Review the included Python repository with live advisory evidence. Allow its tests, then scan for one upgrade." : "Choose a local Python repository with pyproject.toml and uv.lock, then scan for one evidence-backed upgrade."}</p>
           <ol aria-label="Scan safety contract">
             <li>Read the source checkout</li>
             <li>Stage changes in isolation</li>
             <li>Pause before acceptance</li>
           </ol>
           </section>
-          <aside className="repository-requirements" aria-labelledby="requirements-title"><h2 id="requirements-title">Before you scan</h2><dl><div><dt>Local Git repository</dt><dd>A committed checkout inside your configured allowed root. Remote URLs are not accepted.</dd></div><div><dt>Python project + uv lockfile</dt><dd><code>pyproject.toml</code> and <code>uv.lock</code> must be tracked. Only one dependency upgrade is selected per review.</dd></div><div><dt>Explicit human decision</dt><dd>Review the advisory, proposed diff and test results. Approval unlocks patch download; nothing is applied to your checkout.</dd></div></dl><p>Bedrock access is not required for local deterministic selection. Open Connection details to inspect the backend’s current evidence mode.</p></aside>
+          <aside className="repository-requirements" aria-labelledby="requirements-title"><h2 id="requirements-title">Before you scan</h2><dl><div><dt>{hosted ? "Included Git repository" : "Local Git repository"}</dt><dd>{hosted ? "A committed sample on this server. Use the local build to review your own trusted code." : "A committed checkout inside your configured allowed root. Remote URLs are not accepted."}</dd></div><div><dt>Python project + uv lockfile</dt><dd><code>pyproject.toml</code> and <code>uv.lock</code> must be tracked. Only one dependency upgrade is selected per review.</dd></div><div><dt>Explicit human decision</dt><dd>Review the advisory, proposed diff and test results. Approval unlocks patch download; nothing is applied to your checkout.</dd></div></dl><p>{hosted ? "This review uses Groq through AWS AgentCore, live OSV/PyPI evidence and real package tests. Open Connection details for runtime information." : "Bedrock access is not required for local deterministic selection. Open Connection details to inspect the backend’s current evidence mode."}</p></aside>
         </main>
       ) : (
         <main className="review-workspace">

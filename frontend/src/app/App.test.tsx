@@ -148,7 +148,7 @@ describe("Dependency Sentinel landing", () => {
 
     expect(screen.getByRole("heading", { name: /How the agent works/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Safety invariants/ })).toBeInTheDocument();
-    expect(screen.getByText(/does not claim an Amazon Bedrock AgentCore deployment/)).toBeInTheDocument();
+    expect(screen.getByText(/AgentCore hosting is configured separately/)).toBeInTheDocument();
     expect(screen.getByText(/Fixture mode is the default/)).toBeInTheDocument();
     expect(screen.getByText(/never in your checkout/)).toBeInTheDocument();
   });

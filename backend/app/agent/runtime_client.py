@@ -35,8 +35,8 @@ class RuntimeClient:
                 result = json.loads(body.read())
             finally:
                 body.close()
-            if result.get("engine") != "strands-bedrock":
-                raise ValueError("Runtime did not return verified Strands/Bedrock advice")
+            if result.get("engine") not in {"strands-bedrock", "strands-openai-compatible"}:
+                raise ValueError("Runtime did not return live Strands advice")
             self.last_evidence = {key: result[key] for key in ("engine", "tool_calls", "usage")}
             return result["advice"]
         finally:

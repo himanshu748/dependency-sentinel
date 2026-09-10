@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from strands import tool
@@ -6,6 +5,7 @@ from strands import tool
 from app.agent.model import create_strands_agent
 from app.agent.orchestrator import FixtureCandidateSelector
 from app.agent.runtime_evidence import evidence
+from app.agent.runtime_provider import runtime_model_configuration
 from app.domain.models import CandidateSelection, PythonManifest
 from app.evidence.advisories import OsvAdvisoryProvider
 from app.evidence.fixtures import FixtureEvidenceStore
@@ -50,8 +50,7 @@ def advise(payload: dict, *, fixture: bool = False):
         return releases.release_for(package, version).model_dump(mode="json")
 
     agent = create_strands_agent(
-        model_id=os.environ["BEDROCK_MODEL_ID"],
-        region_name=os.getenv("AWS_REGION", "us-east-1"),
+        **runtime_model_configuration(),
         tools=[inspect_dependencies, lookup_advisories, lookup_release],
     )
     result = agent(

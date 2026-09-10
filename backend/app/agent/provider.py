@@ -9,11 +9,7 @@ def validate_provider_configuration(settings: Settings) -> None:
     if settings.fixture_mode:
         return
     if settings.agentcore_runtime_arn:
-        if settings.llm_provider != "bedrock":
-            raise ValueError(
-                "AgentCore currently requires the Bedrock runtime recipe; "
-                "clear runtime ARN for an external model"
-            )
+        # Model credentials belong to the remote runtime, not its caller.
         return
     if settings.llm_provider == "bedrock":
         if not settings.bedrock_model_id:

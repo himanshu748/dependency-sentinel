@@ -1,5 +1,9 @@
 # Amazon Bedrock AgentCore advisory mode
 
+For a model outside Bedrock, use [Groq + Strands on AgentCore](GROQ-AGENTCORE.md).
+The external-provider runtime is deployed with Secrets Manager credentials.
+The real Groq application workflow through AgentCore passed on September 10, 2026.
+
 For the current configuration-only handoff, read [ACTIVATION.md](ACTIVATION.md).
 Checks are read-only by default; paid probes and deployment require explicit opt-in.
 
@@ -7,7 +11,13 @@ The local application remains the workflow owner. AgentCore hosts the Strands ad
 
 ## Current status
 
-The HTTP contract, ARM64 packaging recipe and runtime client are implemented. The September 5 S3 failure is historical; S3 access was subsequently restored. On September 9, Nova Micro availability was AUTHORIZED but its applied daily token quota remained zero. AWS Support case 178858881500850 has an activation escalation. No successful AgentCore invocation is claimed. Recheck access before deployment.
+The IAM-authenticated runtime and DEFAULT endpoint reported READY in us-east-1.
+The application completed an approved fixture upgrade through AgentCore, Strands
+and Groq GPT-OSS 20B, with live OSV/PyPI evidence and resolved-package pytest.
+See [the evidence and its limits](GROQ-VERIFICATION.md).
+The earlier Nova Micro quota issue does not block this external-model route.
+Repository validation and durable state remain local; this is not a public
+full-application deployment.
 
 ## Package and deploy
 
@@ -48,9 +58,14 @@ GET `/ping` reports health. POST `/invocations` accepts the project-specific adv
 
 ## Cost and lifecycle controls
 
-Nova Micro is the default model. Each model response is capped at 512 tokens, each advisory request at eight model calls, idle sessions at 60 seconds, and total session lifetime at five minutes. The client calls StopRuntimeSession in a finally block on success and failure. Runtime authentication is IAM/SigV4; there is no anonymous public model endpoint.
+The verified deployment uses Groq GPT-OSS 20B; the script's Bedrock default remains
+Nova Micro. Each model response is capped at 512 tokens, each advisory request at
+eight model calls, idle sessions at 60 seconds, and total session lifetime at five
+minutes. The client attempts StopRuntimeSession in a finally block on success and
+failure. Runtime authentication is IAM/SigV4; there is no anonymous public model
+endpoint. Logs have KMS encryption and seven-day retention.
 
-Use $25 total across all three projects as the conservative current spending ceiling, with the earlier no-bank-charge condition still in place. These limits are not an AWS billing hard cap. Runtime memory, code storage, logs and applicable taxes can incur charges. `status` is read-only; `set-log-retention` is the separate explicit operation for seven-day retention.
+Use $50 total across all three projects as the authorized spending ceiling, not a target. These limits are not an AWS billing hard cap or a guarantee against bank charges. Runtime memory, code storage, logs and applicable taxes can incur charges. `status` is read-only; `set-log-retention` is the separate explicit operation for seven-day retention.
 
 ## Evidence to capture after access is restored
 
