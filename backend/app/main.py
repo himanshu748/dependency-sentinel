@@ -7,6 +7,7 @@ from app.agent.model import (
     create_strands_agent,
 )
 from app.agent.orchestrator import DependencyUpgradeWorkflow, FixtureCandidateSelector
+from app.agent.provider import create_provider_model, validate_provider_configuration
 from app.agent.tools import build_read_only_tools
 from app.api.approvals import create_approvals_router
 from app.api.events import create_events_router
@@ -16,6 +17,7 @@ from app.config import Settings
 from app.evidence.advisories import OsvAdvisoryProvider
 from app.evidence.fixtures import FixtureEvidenceStore
 from app.evidence.releases import PypiReleaseProvider
+from app.http_contract import LOCAL_ORIGIN_PATTERN, install_http_contract, runtime_metadata
 from app.storage.sqlite import SQLiteStore
 from app.tools.command_runner import CommandRunner
 
@@ -27,13 +29,17 @@ def create_app(
     workflow: DependencyUpgradeWorkflow | None = None,
 ) -> FastAPI:
     active_settings = settings or Settings()
+    validate_provider_configuration(active_settings)
     application = FastAPI(title="Dependency Sentinel", version="0.1.0")
     application.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origin_regex=LOCAL_ORIGIN_PATTERN,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type", "Idempotency-Key"],
+        expose_headers=["X-Request-ID"],
     )
+    install_http_contract(application)
 
     active_store = store or SQLiteStore(active_settings.database_path)
     active_store.initialize()
@@ -47,8 +53,11 @@ def create_app(
             selector = FixtureCandidateSelector()
             advisory_provider = evidence
             release_provider = evidence
+            if active_settings.evidence_mode == "live":
+                advisory_provider = OsvAdvisoryProvider()
+                release_provider = PypiReleaseProvider()
         else:
-            if not active_settings.bedrock_model_id and not active_settings.agentcore_runtime_arn:
+            if not active_settings.selected_model_id and not active_settings.agentcore_runtime_arn:
                 raise ValueError("BEDROCK_MODEL_ID is required when fixture mode is disabled")
             advisory_provider = OsvAdvisoryProvider()
             release_provider = PypiReleaseProvider()
@@ -63,7 +72,8 @@ def create_app(
                 )
             else:
                 agent = create_strands_agent(
-                    model_id=active_settings.bedrock_model_id,
+                    model_id=active_settings.selected_model_id,
+                    provider_model=create_provider_model(active_settings),
                     region_name=active_settings.aws_region,
                     tools=tools,
                 )
@@ -80,6 +90,16 @@ def create_app(
             advisory_provider=advisory_provider,
             release_provider=release_provider,
             command_runner=runner,
+            resolve_lock=active_settings.evidence_mode == "live"
+            or not active_settings.fixture_mode,
+            model_mode=(
+                "fixture"
+                if active_settings.fixture_mode
+                else "agentcore"
+                if active_settings.agentcore_runtime_arn
+                else active_settings.llm_provider
+            ),
+            evidence_mode=active_settings.evidence_mode if active_settings.fixture_mode else "live",
         )
 
     application.state.settings = active_settings
@@ -95,12 +115,21 @@ def create_app(
     )
 
     @application.get("/api/health")
-    async def health() -> dict[str, str | bool]:
+    async def health() -> dict[str, str | bool | int]:
         return {
             "service": "dependency-sentinel",
             "status": "ok",
             "fixture_mode": active_settings.fixture_mode,
-            "model_configured": bool(active_settings.bedrock_model_id),
+            "model_configured": bool(active_settings.selected_model_id),
+            "evidence_mode": active_settings.evidence_mode
+            if active_settings.fixture_mode
+            else "live",
+            "repository_root": str(active_settings.repository_root.resolve()),
+            **runtime_metadata(
+                fixture_mode=active_settings.fixture_mode,
+                runtime_arn=active_settings.agentcore_runtime_arn,
+                provider=active_settings.llm_provider,
+            ),
         }
 
     if active_settings.serve_frontend:
@@ -112,6 +141,7 @@ def create_app(
             application,
             fixture_mode=active_settings.fixture_mode,
             directory=Path(__file__).resolve().parents[2] / "frontend" / "dist",
+            local_live_ui=active_settings.local_live_ui,
         )
 
     return application

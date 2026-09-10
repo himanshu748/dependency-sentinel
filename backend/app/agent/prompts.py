@@ -1,3 +1,5 @@
+from app.domain.models import PythonManifest
+
 SYSTEM_PROMPT = """You are Dependency Sentinel, an evidence-first Python maintenance agent.
 
 Choose exactly one dependency upgrade at a time. Use only the registered read-only discovery
@@ -7,7 +9,18 @@ Return a structured candidate with the advisory identifier and a concise evidenc
 """
 
 
-def candidate_prompt(repository: str) -> str:
+def candidate_prompt(repository: str, manifest: PythonManifest | None = None) -> str:
+    if manifest is not None:
+        return f"""Choose one dependency upgrade from this captured Git commit manifest.
+
+Repository label: {repository}
+Authoritative manifest: {manifest.model_dump_json()}
+
+Use the supplied dependency declarations and locked versions for selection. The source checkout
+may have moved since capture; do not rescan it. Look up advisories for these locked versions and
+the selected fixed release. Both forms of evidence are required. The service checks your candidate
+against this captured manifest and stages and validates it at the same captured commit.
+"""
     return f"""Inspect this repository and choose one safe dependency upgrade candidate:
 
 Repository: {repository}

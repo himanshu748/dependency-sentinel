@@ -68,6 +68,8 @@ def workflow(tmp_path: Path, *, runner: object) -> tuple[DependencyUpgradeWorkfl
             advisory_provider=evidence,
             release_provider=evidence,
             command_runner=runner,
+            model_mode="fixture",
+            evidence_mode="fixture",
         ),
         store,
     )

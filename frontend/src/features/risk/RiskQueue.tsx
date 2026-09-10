@@ -1,5 +1,5 @@
 import type { CandidateSelection } from "../../api/types";
-import { CheckIcon, WarningIcon } from "../../ui/Icons";
+import { RepositoryIcon, WarningIcon } from "../../ui/Icons";
 
 interface Dependency {
   name: string;
@@ -25,11 +25,11 @@ export function RiskQueue({ dependencies, candidate }: Props) {
           return (
             <li key={dependency.name} className={selected ? "selected" : "clear"}>
               <span className="risk-symbol" aria-hidden="true">
-                {selected ? <WarningIcon /> : <CheckIcon />}
+                {selected ? <WarningIcon /> : <RepositoryIcon />}
               </span>
               <span>
                 <strong>{dependency.name} <code>{dependency.resolved_version}</code></strong>
-                <small>{selected ? "advisory found" : "no action"}</small>
+                <small>{selected ? "advisory found" : "not selected · not cleared"}</small>
               </span>
             </li>
           );

@@ -7,6 +7,8 @@ interface Props {
   onScan: () => void;
   isScanning: boolean;
   retry: boolean;
+  trusted: boolean;
+  onTrustedChange: (value: boolean) => void;
   branch?: string;
   head?: string;
   theme: "light" | "dark";
@@ -20,7 +22,9 @@ export function RepositoryHeader({
   onScan,
   isScanning,
   retry,
-  branch = "main",
+  trusted,
+  onTrustedChange,
+  branch = "not inspected",
   head = "pending",
   theme,
   onToggleTheme,
@@ -28,6 +32,17 @@ export function RepositoryHeader({
   return (
     <header className="repository-header">
       <h1>Dependency Sentinel</h1>
+      <div className="repository-header-actions">
+        <button type="button" className="nav-action subtle" onClick={onBack}>Back to overview</button>
+        <button
+          type="button"
+          className="theme-action"
+          onClick={onToggleTheme}
+          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+        >
+          <ThemeIcon />
+        </button>
+      </div>
       <form
         className="repository-form"
         onSubmit={(event) => {
@@ -46,6 +61,8 @@ export function RepositoryHeader({
               autoComplete="off"
               spellCheck={false}
               required
+              disabled={isScanning}
+              placeholder="/absolute/path/to/your-python-repository"
               value={repository}
               onChange={(event) => onRepositoryChange(event.target.value)}
             />
@@ -55,25 +72,20 @@ export function RepositoryHeader({
           <span><BranchIcon />{branch}</span>
           <span><CommitIcon />{head.slice(0, 7)}</span>
         </div>
+        <div className="trust-contract">
+          <label><input type="checkbox" checked={trusted} disabled={isScanning} onChange={(event) => onTrustedChange(event.target.checked)} aria-describedby="repository-trust-note" /> I own or trust this repository and authorize running its tests locally.</label>
+          <p id="repository-trust-note">A worktree protects your source files, not your machine. Do not run untrusted code.</p>
+        </div>
         <button
           type="submit"
           className="primary-action"
-          disabled={isScanning || !repository}
+          disabled={isScanning || !repository.trim()}
           aria-busy={isScanning}
         >
           <PlayIcon />
           {isScanning ? "Scanning repository…" : retry ? "Retry scan" : "Scan repository"}
         </button>
       </form>
-      <button type="button" className="nav-action subtle" onClick={onBack}>Back to overview</button>
-      <button
-        type="button"
-        className="theme-action"
-        onClick={onToggleTheme}
-        aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-      >
-        <ThemeIcon />
-      </button>
     </header>
   );
 }

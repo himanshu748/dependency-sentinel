@@ -1,4 +1,5 @@
 import { BranchIcon, CheckIcon, PlayIcon, ShieldIcon, WarningIcon } from "../../ui/Icons";
+import { InteractivePreview } from "./InteractivePreview";
 
 const PIPELINE = [
   {
@@ -48,20 +49,14 @@ export function Landing({ onStart }: { onStart: () => void }) {
     <main id="main" className="console-landing">
       <section className="console-hero" aria-labelledby="hero-title">
         <div className="hero-copy">
-          <p className="console-eyebrow">
-            <span className="status-led" aria-hidden="true" />
-            Professional Agents · Agents for Humans
-          </p>
-          <h2 id="hero-title">One upgrade. Full evidence. Nothing touched without you.</h2>
+          <h2 id="hero-title">Review one upgrade, with the evidence beside it.</h2>
           <p className="hero-lede">
-            A dependency bump is four jobs wearing one hat: security research, release verification,
-            a source edit and a test run. Automating all four inside a maintainer's checkout is how
-            trust gets lost. Dependency Sentinel separates the reasoning from the execution and shows
-            you the seam.
+            Review a dependency upgrade with its advisory, staged diff and validation output in one
+            place. Changes stay in a disposable worktree. Your source checkout stays unchanged.
           </p>
           <div className="hero-actions">
             <button type="button" className="primary-action" onClick={onStart}>
-              <PlayIcon />Try the demo
+              <PlayIcon />Open workspace
             </button>
             <a className="ghost-action" href="#pipeline-title">Inspect the pipeline</a>
           </div>
@@ -73,16 +68,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
             </span>
           </p>
         </div>
-        <div className="hero-readout" aria-hidden="true">
-          <div className="readout-head"><BranchIcon /><span>run/ledger</span></div>
-          <dl>
-            <div><dt>source checkout</dt><dd className="ok">unchanged</dd></div>
-            <div><dt>staged in</dt><dd>disposable worktree</dd></div>
-            <div><dt>validation</dt><dd className="ok">allowlisted</dd></div>
-            <div><dt>network (fixture)</dt><dd className="ok">none</dd></div>
-            <div><dt>gate</dt><dd className="hold">waiting for approval</dd></div>
-          </dl>
-        </div>
+        <InteractivePreview />
       </section>
 
       <section className="console-problem" aria-labelledby="problem-title">
@@ -144,9 +130,9 @@ export function Landing({ onStart }: { onStart: () => void }) {
               typed, read-only tools.
             </p>
             <p>
-              Live mode is opt-in and configured in your own AWS account: an <strong>Amazon
-              Bedrock</strong> model provider, plus OSV advisory data and PyPI release data. Each
-              model response is capped at 512 tokens to bound quota reservation and cost.
+              Live mode is opt-in: use <strong>Amazon Bedrock</strong> or a tool-capable
+              OpenAI-compatible endpoint, plus OSV advisory data and PyPI release data.
+              Each model response is capped at 512 tokens; this is not a spending cap.
             </p>
             <p className="architecture-caveat">
               <WarningIcon />
@@ -187,7 +173,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
           output, then approve or reject the exact patch.
         </p>
         <button type="button" className="primary-action" onClick={onStart}>
-          <PlayIcon />Try the demo
+          <PlayIcon />Open workspace
         </button>
       </section>
 

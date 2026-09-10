@@ -1,5 +1,6 @@
 import re
 import subprocess
+from hashlib import sha256
 from pathlib import Path
 from types import TracebackType
 from uuid import uuid4
@@ -26,13 +27,41 @@ def _git(repository: Path, *arguments: str) -> str:
     return completed.stdout.strip()
 
 
+def tracked_worktree_fingerprint(workspace: Path) -> str:
+    """Bind tracked source, index and detached HEAD; ordinary test caches are excluded."""
+    state = [
+        _git(workspace, "rev-parse", "HEAD"),
+        _git(workspace, "ls-files", "--stage"),
+        _git(workspace, "diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD", "--"),
+    ]
+    return sha256("\0".join(state).encode()).hexdigest()
+
+
+def verify_staged_scope(workspace: Path, *, revision: str, changed_files: list[Path]) -> None:
+    changed = set(_git(workspace, "diff", "--name-only", "--no-renames", "HEAD", "--").splitlines())
+    if _git(workspace, "rev-parse", "HEAD") != revision:
+        raise WorktreeError("Staged worktree moved away from the captured source revision")
+    if not changed or not changed.issubset({str(path) for path in changed_files}):
+        raise WorktreeError("Staged worktree includes changes outside the proposed patch")
+
+
 class DisposableWorktree:
-    def __init__(self, source: Path, workspace_root: Path, *, run_id: str | None = None) -> None:
+    def __init__(
+        self,
+        source: Path,
+        workspace_root: Path,
+        *,
+        run_id: str | None = None,
+        revision: str | None = None,
+    ) -> None:
         self.source = Path(source).resolve(strict=True)
         self.workspace_root = Path(workspace_root)
         self.run_id = run_id or f"run-{uuid4().hex[:12]}"
         if not _RUN_ID.fullmatch(self.run_id):
             raise WorktreeError("run id contains unsupported characters")
+        self.revision = revision or _git(self.source, "rev-parse", "HEAD")
+        if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", self.revision):
+            raise WorktreeError("worktree revision must be a full captured commit SHA")
         self.path: Path | None = None
 
     def __enter__(self) -> Path:
@@ -48,7 +77,7 @@ class DisposableWorktree:
         if destination.exists():
             raise WorktreeError("worktree destination already exists")
 
-        _git(self.source, "worktree", "add", "--detach", str(destination), "HEAD")
+        _git(self.source, "worktree", "add", "--detach", str(destination), self.revision)
         self.path = destination
         return destination
 

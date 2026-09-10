@@ -25,7 +25,7 @@ export interface CandidateSelection {
 
 export interface RunEnvelope {
   run: AgentRun;
-  candidate: CandidateSelection;
+  candidate: CandidateSelection | null;
   approval_id: string | null;
 }
 
@@ -38,4 +38,13 @@ export interface RunEvent {
   payload: Record<string, unknown>;
   idempotency_key: string;
   created_at: string;
+}
+
+export interface ValidationResult {
+  command?: string[];
+  exit_code?: number;
+  stdout?: string;
+  stderr?: string;
+  duration_seconds?: number;
+  timed_out?: boolean;
 }

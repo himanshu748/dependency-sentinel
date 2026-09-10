@@ -1,10 +1,14 @@
 # Dependency Sentinel
 
-Dependency Sentinel is an evidence-first maintenance agent for the Professional Agents track of the Agents for Humans Hackathon. It finds one vulnerable Python dependency, verifies the smallest fixed release, stages the upgrade in a disposable Git worktree, runs validation and pauses for a human decision.
+[Connect a model](docs/ACTIVATION.md) · [Verified Qwen workflows](docs/QWEN-VERIFICATION.md) · [Submission checklist](docs/RELEASE-CHECKLIST.md)
+
+For the real-input, local-first workspace and its verified limits, see [Local product workflow](LOCAL-PRODUCT.md).
+
+Dependency Sentinel is a maintenance agent for the Professional Agents track of the Agents for Humans Hackathon. It selects one affected Python dependency, checks a proposed fixed release against advisory and package metadata, stages the upgrade in a disposable Git worktree, runs validation and pauses for a human decision.
 
 It never edits the selected source checkout.
 
-![Dependency Sentinel public landing page](docs/screenshots/landing-desktop.png)
+![Dependency Sentinel landing page](docs/screenshots/landing-desktop.png)
 
 ## Why this project
 
@@ -17,6 +21,10 @@ Routine dependency upgrades combine security research, release verification, sou
 5. The run pauses at a persisted approval gate.
 6. Approval records the reviewed result. It does not silently modify the source checkout or publish anything.
 
+Selection, staging and validation use one captured Git commit, even if the source branch later moves. Dirty input is rejected. Changes to tracked files during validation invalidate the result. After approval, the server can export both the patch and a review receipt containing evidence, commands, source revision, approval time and the patch's SHA-256.
+
+Receipts establish consistency of a local saved record, not a signed attestation. They contain local paths and test output; review them before sharing. Older runs without complete provenance remain viewable but cannot export.
+
 ## One-command judging demo
 
 Prerequisites: Python 3.11+, uv, Node.js 20.19+ (22.12+ recommended), npm, Git and Bash.
@@ -27,9 +35,28 @@ python3 scripts/demo.py
 
 Open `http://127.0.0.1:8000`. This installs locked dependencies, builds the frontend, and serves the UI and API from one local process. It forces scripted fixture mode even if your environment enables AWS, uses temporary demo data, and removes that data when stopped with Ctrl+C. First-time dependency installation needs internet access; the demo itself does not call a model. Use `--port 8201` to avoid a port conflict. After installation, `--skip-install` reuses dependencies.
 
-This is a local judging build, not a public hosted service. Live Bedrock inference and AgentCore deployment remain unverified.
+This command runs the scripted model. Real Qwen3-8B inference through Strands was verified on September 9; see [the workflow evidence](docs/QWEN-VERIFICATION.md). The private Modal endpoint was then stopped at the owner's request. Bedrock and AgentCore remain unverified. A judge must not be told that this free scripted run demonstrates live inference.
+
+## Real model setup
+
+The backend supports explicit Bedrock, AgentCore, or OpenAI-compatible configuration, with no silent fallback to fixtures. [Qwen on Modal](docs/MODAL.md) documents the tested provider, authentication, spending controls and cold-start procedure. [External model configuration](docs/EXTERNAL-MODELS.md) also supports a compatible endpoint from another authorized provider.
+
+After configuring the ignored `backend/.env`, run:
+
+```bash
+backend/.venv/bin/python scripts/run.py check
+backend/.venv/bin/python scripts/model_probe.py --allow-paid-requests --warm-only
+backend/.venv/bin/python scripts/model_workflow_smoke.py --allow-paid-requests
+backend/.venv/bin/python scripts/run.py serve --port 8000 --allow-paid-requests
+```
+
+The last three commands require an available funded endpoint. Do not run them against a deliberately stopped service or put provider credentials in the frontend. Public hosting and free real-model access for judges still need to be arranged; bring-your-own paid credentials is not a completed judge-access plan.
 
 ## Architecture
+
+![Current provider and approval architecture](docs/architecture-current.png)
+
+[Editable SVG](docs/architecture-current.svg). Use this PNG for the submission attachment.
 
 ```mermaid
 flowchart LR
@@ -43,7 +70,7 @@ flowchart LR
     API --> Store[(SQLite run ledger)]
 ```
 
-The default fixture mode is deterministic and requires no AWS account. Live mode uses the same workflow with a Strands `Agent`, an Amazon Bedrock model, OSV advisory data and PyPI release data.
+The default fixture mode is deterministic and requires no AWS account. Live mode uses a Strands `Agent` with Bedrock or an OpenAI-compatible model. Advisory/release evidence has its own explicit fixture/live setting.
 
 ## Reproducible local demo
 
@@ -53,17 +80,16 @@ Create the standalone vulnerable fixture repository:
 
 ```bash
 ./scripts/create_demo_repository.sh
-cp .env.example .env
 ```
 
-The script prints the absolute repository path. The default `.env.example` allows repositories under `demo-repositories/` and keeps temporary worktrees under `backend/data/workspaces/`.
+The script prints the absolute repository path. The API command below explicitly allows that demo directory and keeps worktrees under the ignored backend data directory.
 
 Start the API:
 
 ```bash
 cd backend
-uv sync --dev
-uv run uvicorn app.main:app --reload
+uv sync --frozen --dev
+DEPENDENCY_SENTINEL_FIXTURE_MODE=true DEPENDENCY_SENTINEL_EVIDENCE_MODE=fixture DEPENDENCY_SENTINEL_REPOSITORY_ROOT=../demo-repositories uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
 In another terminal, start the interface and pass the path printed by the setup script:
@@ -71,14 +97,14 @@ In another terminal, start the interface and pass the path printed by the setup 
 ```bash
 cd frontend
 npm ci
-VITE_DEMO_REPOSITORY=/absolute/path/to/demo-repositories/vulnerable-python-project npm run dev
+VITE_DEMO_REPOSITORY=/absolute/path/to/demo-repositories/vulnerable-python-project npm run dev -- --host 127.0.0.1 --port 5179
 ```
 
-Open `http://127.0.0.1:5173`, scan the fixture and review the evidence, diff, validation output and exact approval gate.
+Open `http://127.0.0.1:5179`. The Vite proxy targets port 8001. Scan the controlled fixture and review the evidence, diff, validation output and exact approval gate. Only run validation for repositories you own and trust: their build and test code executes locally, and a worktree is not a security sandbox.
 
 ## Live Bedrock mode
 
-Set these values in the repository root `.env`:
+The backend reads `backend/.env`, not a root `.env`. Set these values there or in the API process environment:
 
 ```dotenv
 AWS_PROFILE=your-profile
@@ -87,7 +113,7 @@ DEPENDENCY_SENTINEL_AWS_REGION=us-east-1
 DEPENDENCY_SENTINEL_FIXTURE_MODE=false
 ```
 
-`amazon.nova-micro-v1:0` is an on-demand text-model example listed in `us-east-1`; verify access in your own account before enabling live mode. The Bedrock client explicitly caps each response at 512 tokens to bound quota reservation and cost.
+Model advice and evidence retrieval are separate settings. `DEPENDENCY_SENTINEL_EVIDENCE_MODE=live` uses OSV/PyPI; setting fixture mode to false alone does not enable live evidence. Verify current provider access and pricing first. Response limits do not create an account-wide billing cap or guarantee credits-only spend.
 
 Live mode can use paid AWS services and public advisory APIs. Confirm your AWS budget and model access before enabling it. The current repository demonstrates Strands Agents SDK orchestration locally. It does not claim an Amazon Bedrock AgentCore deployment.
 
@@ -98,6 +124,8 @@ Live mode can use paid AWS services and public advisory APIs. Confirm your AWS b
 - `GET /api/runs/{run_id}/events` returns the ordered event ledger
 - `GET /api/runs/{run_id}/events/stream` streams run events with SSE
 - `POST /api/runs/{run_id}/approvals` records the exact approval or rejection
+- `GET /api/runs/{run_id}/exports/patch` downloads the approved, validated patch
+- `GET /api/runs/{run_id}/exports/receipt` downloads its bound JSON review receipt
 - `GET /api/health` reports fixture and model configuration
 
 ## Verification
@@ -118,14 +146,7 @@ npm test -- --run
 npm run build
 ```
 
-End-to-end:
-
-```bash
-cd frontend
-npm run test:e2e
-```
-
-The checked-in fixture test asserts that validation runs against the staged Jinja2 3.1.5 manifest and lockfile. Nine frontend interaction tests pass. Four Playwright checks verify the real Vite application in desktop Chromium and a Pixel 7 viewport, including landing-to-demo navigation, persisted theme behavior, and no horizontal overflow at 390, 768, and 1440 pixel widths. See [the verification record](docs/VERIFICATION.md).
+Use the one-command demo for a browser walkthrough. There is no configured `npm run test:e2e` script. The automated suites cover the controlled fixture, path restrictions, idempotent approvals, validation failures and frontend loading/recovery states. Historical screenshots are not evidence of current live-provider access.
 
 | Landing | Mobile landing | Approval console | Mobile evidence |
 | --- | --- | --- | --- |
@@ -133,9 +154,9 @@ The checked-in fixture test asserts that validation runs against the staged Jinj
 
 ## Hackathon technology and outstanding requirements
 
-The free demo now executes a real Strands Agent using a scripted model provider, including tool dispatch and structured output. Live mode uses Amazon Bedrock directly or the optional AgentCore advisory service, which accepts a locked dependency snapshot and returns a candidate for independent local verification. See [AgentCore setup](docs/AGENTCORE.md).
+The free demo executes Strands with a scripted model, including tool dispatch and structured output. Real Qwen inference was verified with recorded advisory evidence and actual fixture tests. Live OSV/PyPI evidence is a separate verification gate. Bedrock and AgentCore remain optional alternatives. See [Qwen verification](docs/QWEN-VERIFICATION.md) and [AgentCore setup](docs/AGENTCORE.md).
 
-The backend suite now passes 59 tests. The [qualification record](docs/QUALIFICATION.md) documents remaining publication and account requirements. The [architecture PNG](docs/architecture.png), [Builder Center article draft](docs/BUILDER_POST.md) and [demo video outline](docs/DEMO_SCRIPT.md) are prepared. An article draft does not earn bonus points until it is publicly published on Builder Center.
+The [qualification record](docs/QUALIFICATION.md) documents remaining publication and account requirements. The [architecture PNG](docs/architecture.png), [article draft](docs/BUILDER_POST.md) and [video outline](docs/DEMO_SCRIPT.md) exist locally; publication and the final Devpost record have not been verified for this revision. An unpublished draft earns no blog bonus.
 
 ## Safety properties
 

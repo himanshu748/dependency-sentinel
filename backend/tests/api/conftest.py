@@ -26,6 +26,8 @@ def api_app(tmp_path: Path):
         advisory_provider=evidence,
         release_provider=evidence,
         command_runner=PassingRunner(),
+        model_mode="fixture",
+        evidence_mode="fixture",
     )
     settings = Settings(
         fixture_mode=True,

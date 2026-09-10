@@ -15,12 +15,17 @@ def create_strands_agent(
     model_id: str,
     region_name: str,
     tools: Sequence[Any],
+    provider_model=None,
 ) -> Agent:
-    model = BedrockModel(
-        model_id=model_id,
-        region_name=region_name,
-        temperature=0.0,
-        max_tokens=512,
+    model = (
+        provider_model
+        if provider_model is not None
+        else BedrockModel(
+            model_id=model_id,
+            region_name=region_name,
+            temperature=0.0,
+            max_tokens=512,
+        )
     )
     return Agent(
         name="dependency_sentinel",
@@ -43,11 +48,11 @@ class StrandsCandidateSelector:
         manifest: PythonManifest,
         advisory_provider: object,
     ) -> CandidateSelection:
-        del manifest, advisory_provider
+        del advisory_provider
         agent = isolated_agent(self.agent)
         self.last_run_agent = agent
         result = agent(
-            candidate_prompt(repository),
+            candidate_prompt(repository, manifest),
             structured_output_model=CandidateSelection,
         )
         if not isinstance(result.structured_output, CandidateSelection):

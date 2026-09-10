@@ -39,5 +39,5 @@ def inspect_repository(path: Path, *, allowed_root: Path) -> RepositorySnapshot:
 
     head = _git(repository, "rev-parse", "HEAD")
     branch = _git(repository, "branch", "--show-current") or "detached"
-    dirty = bool(_git(repository, "status", "--porcelain=v1"))
+    dirty = bool(_git(repository, "status", "--porcelain=v1", "--untracked-files=all"))
     return RepositorySnapshot(path=repository, head=head, branch=branch, dirty=dirty)

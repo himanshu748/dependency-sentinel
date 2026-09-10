@@ -48,3 +48,16 @@ def test_disposable_worktree_uses_validated_destination(tmp_path: Path) -> None:
     with DisposableWorktree(source, workspace_root, run_id="run-123") as workspace:
         assert workspace.parent.resolve() == workspace_root.resolve()
         assert workspace.name == "run-123"
+
+
+def test_worktree_stays_at_captured_commit_when_head_moves(tmp_path: Path) -> None:
+    source = seeded_repository(tmp_path / "source")
+    revision = git(source, "rev-parse", "HEAD")
+    staged = DisposableWorktree(source, tmp_path / "workspaces", revision=revision)
+    (source / "pyproject.toml").write_text('[project]\nname = "later"\n')
+    git(source, "commit", "-qam", "later source commit")
+    assert git(source, "rev-parse", "HEAD") != revision
+    with staged as workspace:
+        assert git(workspace, "rev-parse", "HEAD") == revision
+        assert 'name = "fixture"' in (workspace / "pyproject.toml").read_text()
+    assert 'name = "later"' in (source / "pyproject.toml").read_text()

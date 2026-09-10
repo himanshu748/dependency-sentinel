@@ -9,6 +9,13 @@ class CommandExecutor(Protocol):
     def execute(self, request: CommandRequest, *, cwd: Path) -> CommandResult: ...
 
 
-def validate_upgrade(workspace: Path, *, runner: CommandExecutor) -> ValidationReport:
-    result = runner.execute(CommandRequest(name=AllowedCommand.PYTEST), cwd=workspace)
+def validate_upgrade(
+    workspace: Path, *, runner: CommandExecutor, resolved_environment: bool = False
+) -> ValidationReport:
+    result = runner.execute(
+        CommandRequest(
+            name=AllowedCommand.UV_PYTEST if resolved_environment else AllowedCommand.PYTEST
+        ),
+        cwd=workspace,
+    )
     return ValidationReport(passed=result.exit_code == 0 and not result.timed_out, results=[result])

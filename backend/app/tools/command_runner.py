@@ -17,6 +17,7 @@ class CommandPolicyError(ValueError):
 class AllowedCommand(StrEnum):
     PYTEST = "pytest"
     UV_LOCK = "uv_lock"
+    UV_PYTEST = "uv_pytest"
 
 
 class CommandRequest(BaseModel):
@@ -51,6 +52,21 @@ class CommandRunner:
         self.timeout_seconds = timeout_seconds
 
     def _build_command(self, request: CommandRequest) -> list[str]:
+        if request.name is AllowedCommand.UV_PYTEST:
+            if request.package is not None:
+                raise CommandPolicyError("pytest does not accept a package argument")
+            return [
+                "uv",
+                "run",
+                "--frozen",
+                "--with",
+                "pytest",
+                "python",
+                "-m",
+                "pytest",
+                "-q",
+                "--disable-warnings",
+            ]
         if request.name is AllowedCommand.PYTEST:
             if request.package is not None:
                 raise CommandPolicyError("pytest does not accept a package argument")

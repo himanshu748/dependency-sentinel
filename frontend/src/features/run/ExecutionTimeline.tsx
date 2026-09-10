@@ -1,4 +1,4 @@
-import type { RunEvent } from "../../api/types";
+import type { RunEvent, RunStatus } from "../../api/types";
 
 const steps = [
   ["repository_inspected", "Repository inspected", "Files, manifests and lockfiles analyzed"],
@@ -6,7 +6,7 @@ const steps = [
   ["candidate_selected", "Candidate selected", "One evidence-backed upgrade chosen"],
   ["evidence_collected", "Evidence collected", "Advisory and release data verified"],
   ["upgrade_staged", "Upgrade staged", "Disposable worktree"],
-  ["validation_completed", "Validation passed", "Tests and policy checks executed"],
+  ["validation_completed", "Validation", "Repository tests executed in isolation"],
   ["approval_required", "Approval required", "Human review and approval required"],
 ] as const;
 
@@ -20,22 +20,27 @@ function time(value?: string) {
   }).format(new Date(value));
 }
 
-export function ExecutionTimeline({ events }: { events: RunEvent[] }) {
+export function ExecutionTimeline({ events, status }: { events: RunEvent[]; status?: RunStatus }) {
   return (
     <ol className="execution-timeline">
       {steps.map(([kind, label, description], index) => {
-        const event = events.find((item) => item.kind === kind);
-        const paused = kind === "approval_required" && Boolean(event);
+        const approved = kind === "approval_required" && status === "completed";
+        const rejected = kind === "approval_required" && status === "cancelled";
+        const event = events.find((item) => item.kind === (approved ? "approval_recorded" : rejected ? "approval_rejected" : kind));
+        const reached = Boolean(event) || approved || rejected;
+        const decision = kind === "approval_required" && reached;
+        const paused = decision && (!status || status === "waiting_for_approval");
+        const failed = kind === "validation_completed" && event?.payload.passed === false;
         return (
-          <li key={kind} className={event && !paused ? "complete" : paused ? "paused" : "pending"}>
+          <li key={kind} className={failed || rejected ? "failed" : reached && !paused ? "complete" : paused ? "paused" : "pending"}>
             <span className="step-number">{index + 1}</span>
             <span className="step-copy">
-              <strong>{label}</strong>
-              <small>{description}</small>
+              <strong>{kind === "validation_completed" && event ? failed ? "Validation failed" : "Validation passed" : decision && status === "completed" ? "Patch approved" : rejected ? "Patch rejected" : label}</strong>
+              <small>{approved || rejected ? "Human decision saved" : description}</small>
             </span>
             <span className="step-status">
-              <strong>{paused ? "Paused" : event ? "Complete" : "Locked"}</strong>
-              <small>{paused ? "waiting for approval" : time(event?.created_at)}</small>
+              <strong>{failed ? "Failed" : rejected ? "Rejected" : paused ? "Paused" : reached ? "Complete" : "Not reached"}</strong>
+              <small>{paused ? "waiting for approval" : (approved || rejected) && !event ? "Time unavailable" : time(event?.created_at)}</small>
             </span>
           </li>
         );

@@ -1,10 +1,13 @@
 # Amazon Bedrock AgentCore advisory mode
 
+For the current configuration-only handoff, read [ACTIVATION.md](ACTIVATION.md).
+Checks are read-only by default; paid probes and deployment require explicit opt-in.
+
 The local application remains the workflow owner. AgentCore hosts the Strands advisory step and returns structured data; durable state and approvals remain local.
 
 ## Current status
 
-Implementation and ARM64 packaging are complete. Local tests exercise the HTTP contract and the real Strands fixture tool loop. Deployment was attempted on 2026-09-05 but S3 returned `NotSignedUp`. The alternate project login is expired. No successful AgentCore invocation is claimed.
+The HTTP contract, ARM64 packaging recipe and runtime client are implemented. The September 5 S3 failure is historical; S3 access was subsequently restored. On September 9, Nova Micro availability was AUTHORIZED but its applied daily token quota remained zero. AWS Support case 178858881500850 has an activation escalation. No successful AgentCore invocation is claimed. Recheck access before deployment.
 
 ## Package and deploy
 
@@ -12,7 +15,8 @@ From the repository root, after installing backend dependencies:
 
 ```bash
 backend/.venv/bin/python scripts/agentcore.py package
-backend/.venv/bin/python scripts/agentcore.py deploy
+backend/.venv/bin/python scripts/agentcore.py preflight
+backend/.venv/bin/python scripts/agentcore.py deploy --allow-paid
 backend/.venv/bin/python scripts/agentcore.py status
 ```
 
@@ -22,7 +26,7 @@ Deployment state and archives are excluded from Git under `.agentcore/`. A faile
 
 ## Connect the local application
 
-Use the ARN returned by the deployment in your root `.env`:
+Use the ARN returned by the deployment in your `backend/.env`:
 
 ```dotenv
 DEPENDENCY_SENTINEL_FIXTURE_MODE=false
@@ -46,7 +50,7 @@ GET `/ping` reports health. POST `/invocations` accepts the project-specific adv
 
 Nova Micro is the default model. Each model response is capped at 512 tokens, each advisory request at eight model calls, idle sessions at 60 seconds, and total session lifetime at five minutes. The client calls StopRuntimeSession in a finally block on success and failure. Runtime authentication is IAM/SigV4; there is no anonymous public model endpoint.
 
-The initial deployment/test authorization is $5 total across all three projects. These application limits are not an AWS billing hard cap. Runtime memory, code storage and logs can incur charges; stop active sessions and remove unused project resources after judging. `scripts/agentcore.py status` also sets existing project log groups to seven-day retention.
+Use $25 total across all three projects as the conservative current spending ceiling, with the earlier no-bank-charge condition still in place. These limits are not an AWS billing hard cap. Runtime memory, code storage, logs and applicable taxes can incur charges. `status` is read-only; `set-log-retention` is the separate explicit operation for seven-day retention.
 
 ## Evidence to capture after access is restored
 

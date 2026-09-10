@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
 
@@ -116,6 +116,8 @@ const events = [
   },
 ];
 
+beforeEach(() => { window.location.hash = "#overview"; });
+
 afterEach(() => {
   vi.unstubAllGlobals();
   window.localStorage.removeItem("dependency-sentinel-theme");
@@ -124,7 +126,9 @@ afterEach(() => {
 
 function openDemo() {
   render(<App />);
-  fireEvent.click(screen.getAllByRole("button", { name: "Try the demo" })[0]);
+  fireEvent.click(screen.getAllByRole("button", { name: "Open workspace" })[0]);
+  fireEvent.change(screen.getByLabelText("Repository path"), { target: { value: "/tmp/vulnerable-python-project" } });
+  fireEvent.click(screen.getByRole("checkbox"));
 }
 
 describe("Dependency Sentinel landing", () => {
@@ -132,11 +136,11 @@ describe("Dependency Sentinel landing", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Dependency Sentinel" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /One upgrade\. Full evidence/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Review one upgrade/ })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Pipeline" })).toHaveAttribute("href", "#pipeline-title");
-    expect(screen.getAllByRole("button", { name: "Try the demo" }).length).toBeGreaterThan(0);
-    expect(screen.queryByText("No maintenance run yet")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Open workspace" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Review your next dependency upgrade")).not.toBeInTheDocument();
   });
 
   it("states the six-stage pipeline, the stack and the safety invariants truthfully", () => {
@@ -151,21 +155,36 @@ describe("Dependency Sentinel landing", () => {
 
   it("moves between the landing page and the demo console", () => {
     openDemo();
-    expect(screen.getByText("No maintenance run yet")).toBeInTheDocument();
+    expect(screen.getByText("Review your next dependency upgrade")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Back to overview" }));
-    expect(screen.getByRole("heading", { name: /One upgrade\. Full evidence/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Review one upgrade/ })).toBeInTheDocument();
   });
 });
 
 describe("Dependency Sentinel", () => {
+  it("keeps repository consent before scanning in the same form and utilities separate", () => {
+    openDemo();
+    const path = screen.getByLabelText("Repository path");
+    const consent = screen.getByRole("checkbox");
+    const scan = screen.getByRole("button", { name: "Scan repository" });
+    const form = path.closest("form");
+
+    expect(form).toContainElement(consent);
+    expect(form).toContainElement(scan);
+    expect(path.compareDocumentPosition(consent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(consent.compareDocumentPosition(scan) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(consent).toHaveAccessibleDescription(/Do not run untrusted code/);
+    expect(form).not.toContainElement(screen.getByRole("button", { name: "Saved runs" }));
+  });
+
   it("renders a useful empty state and repository scan action", () => {
     openDemo();
 
     expect(screen.getByRole("heading", { name: "Dependency Sentinel" })).toBeInTheDocument();
     expect(screen.getByLabelText("Repository path")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Scan repository" })).toBeEnabled();
-    expect(screen.getByText("No maintenance run yet")).toBeInTheDocument();
+    expect(screen.getByText("Review your next dependency upgrade")).toBeInTheDocument();
   });
 
   it("supports an explicit accessible dark theme toggle", () => {
@@ -215,7 +234,8 @@ describe("Dependency Sentinel", () => {
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(pausedRun), { status: 201 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(events), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(completedRun), { status: 200 }));
+      .mockResolvedValueOnce(new Response(JSON.stringify(completedRun), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([...events, { kind: "approval_recorded", payload: { choice: "approved" }, created_at: "2026-09-02T10:25:00Z" }]), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     openDemo();
     fireEvent.click(screen.getByRole("button", { name: "Scan repository" }));
@@ -224,13 +244,41 @@ describe("Dependency Sentinel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Approve validated patch" }));
 
     expect(await screen.findByText("Approved report complete")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenLastCalledWith(
+    expect(fetchMock).toHaveBeenNthCalledWith(3,
       "/api/runs/run-test/approvals",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ approval_id: "apply-upgrade", choice: "approved" }),
       }),
     );
+    await waitFor(() => expect(fetchMock).toHaveBeenLastCalledWith("/api/runs/run-test/events"));
+  });
+
+  it("keeps a saved approval complete and retries only activity after a refresh failure", async () => {
+    const completedRun = { ...pausedRun.run, status: "completed" };
+    const approvedAt = "2026-09-02T10:25:00Z";
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(pausedRun), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(events)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(completedRun)))
+      .mockRejectedValueOnce(new Error("Activity connection lost"))
+      .mockResolvedValueOnce(new Response(JSON.stringify([...events, { kind: "approval_recorded", payload: { choice: "approved" }, created_at: approvedAt }])));
+    vi.stubGlobal("fetch", fetchMock);
+    openDemo();
+    fireEvent.click(screen.getByRole("button", { name: "Scan repository" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Approve validated patch" }));
+    const retry = await screen.findByRole("button", { name: "Retry activity" });
+    expect(screen.getByText("Approved report complete")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download reviewed patch" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Retry decision" })).not.toBeInTheDocument();
+    expect(screen.getByText("Patch approved").closest("li")).toHaveTextContent("Time unavailable");
+    fireEvent.click(retry);
+    const decisionTime = new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(approvedAt));
+    await waitFor(() => expect(screen.getByText("Patch approved").closest("li")).toHaveTextContent(decisionTime));
+    expect(screen.queryByRole("button", { name: "Retry activity" })).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(call => String(call[0]).endsWith("/approvals"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.slice(3).map(call => [call[0], call[1]?.method || "GET"]))
+      .toEqual([["/api/runs/run-test/events", "GET"], ["/api/runs/run-test/events", "GET"]]);
   });
 
   it("shows an actionable API error and keeps retry available", async () => {

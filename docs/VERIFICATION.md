@@ -4,7 +4,7 @@ Dependency Sentinel is verified at three levels:
 
 - `pytest -q` exercises the deterministic backend workflow, approval boundary, path safety, idempotency, and API behavior.
 - `npm test` passes 9 React interaction tests covering the landing path plus empty, loading, evidence, approval, rejection, error, and theme states.
-- `npm run test:e2e` passes 4 checks in desktop Chromium and a Pixel 7 viewport, including landing-to-demo navigation, persisted theme behavior, and responsive overflow checks at 390, 768, and 1440 pixels.
+- Historical browser checks covered desktop Chromium and a Pixel 7-sized viewport. Correction: there is no configured `npm run test:e2e` command in the current package; do not use this older record as a reproducible script claim.
 - `npm run build` produces the production frontend bundle successfully.
 
 On 2026-09-05 the backend suite passed 59 tests, including real Strands fixture tool dispatch, the AgentCore HTTP contract, session cleanup on failure, local-only demo serving, and an offline cloud-advisory fixture. ARM64 direct-code packaging succeeded. Deployment was attempted but AWS rejected S3 with `NotSignedUp`; the Nova access check hit a daily-token limit. No successful cloud deployment or inference is claimed. See [qualification record](QUALIFICATION.md).

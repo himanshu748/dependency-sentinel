@@ -1,3 +1,6 @@
+import asyncio
+from threading import Event
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -5,7 +8,9 @@ from httpx import ASGITransport, AsyncClient
 @pytest.mark.asyncio
 async def test_create_poll_and_idempotently_retry_run(api_app) -> None:
     repository = api_app.state.test_repository
-    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
         first = await client.post(
             "/api/runs",
             json={"repository": str(repository)},
@@ -32,7 +37,9 @@ async def test_idempotency_key_cannot_be_reused_for_another_repository(api_app, 
     repository = api_app.state.test_repository
     other = tmp_path / "other"
     other.mkdir()
-    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
         await client.post(
             "/api/runs",
             json={"repository": str(repository)},
@@ -51,7 +58,9 @@ async def test_idempotency_key_cannot_be_reused_for_another_repository(api_app, 
 @pytest.mark.asyncio
 async def test_event_stream_contains_ordered_sse_records(api_app) -> None:
     repository = api_app.state.test_repository
-    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
         created = await client.post(
             "/api/runs",
             json={"repository": str(repository)},
@@ -71,7 +80,9 @@ async def test_event_stream_contains_ordered_sse_records(api_app) -> None:
 async def test_repository_inspection_endpoint_uses_boundary(api_app, tmp_path) -> None:
     repository = api_app.state.test_repository
     outside = tmp_path.parent
-    async with AsyncClient(transport=ASGITransport(app=api_app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
         accepted = await client.post(
             "/api/repositories/inspect", json={"repository": str(repository)}
         )
@@ -81,3 +92,79 @@ async def test_repository_inspection_endpoint_uses_boundary(api_app, tmp_path) -
     assert accepted.json()["head"]
     assert rejected.status_code == 400
     assert rejected.json()["detail"]["code"] == "repository_invalid"
+
+
+@pytest.mark.asyncio
+async def test_failed_scan_persists_recovery_reason(api_app, tmp_path) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
+        response = await client.post(
+            "/api/runs",
+            json={"repository": str(tmp_path / "missing")},
+            headers={"Idempotency-Key": "missing-repository"},
+        )
+        runs = (await client.get("/api/runs")).json()
+        events = (await client.get(f"/api/runs/{runs[0]['id']}/events")).json()
+    assert response.status_code == 400
+    assert runs[0]["status"] == "failed"
+    assert events[-1]["kind"] == "run_failed"
+    assert events[-1]["payload"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_scan_keeps_health_responsive_and_rejects_parallel_execution(api_app) -> None:
+    started, release = Event(), Event()
+    original = api_app.state.workflow.command_runner
+
+    class BoundedRunner:
+        def execute(self, request, *, cwd):
+            started.set()
+            assert release.wait(timeout=5)
+            return original.execute(request, cwd=cwd)
+
+    api_app.state.workflow.command_runner = BoundedRunner()
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
+        request = {"repository": str(api_app.state.test_repository)}
+        first = asyncio.create_task(
+            client.post("/api/runs", json=request, headers={"Idempotency-Key": "active-review"})
+        )
+        try:
+            assert await asyncio.to_thread(started.wait, 3)
+            health = await asyncio.wait_for(client.get("/api/health"), timeout=1)
+            second = await client.post(
+                "/api/runs", json=request, headers={"Idempotency-Key": "another-review"}
+            )
+            assert health.status_code == 200
+            assert second.status_code == 409
+            assert second.json()["detail"]["code"] == "scan_in_progress"
+        finally:
+            release.set()
+            completed = await first
+        assert completed.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_unexpected_provider_failure_is_saved_without_exposing_exception(api_app) -> None:
+    class BrokenSelector:
+        def select(self, *args):
+            raise TypeError("private provider credential detail")
+
+    api_app.state.workflow.selector = BrokenSelector()
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="http://testserver"
+    ) as client:
+        response = await client.post(
+            "/api/runs",
+            json={"repository": str(api_app.state.test_repository)},
+            headers={"Idempotency-Key": "provider-crash"},
+        )
+        runs = (await client.get("/api/runs")).json()
+        events = (await client.get(f"/api/runs/{runs[0]['id']}/events")).json()
+    assert response.status_code == 500
+    assert "credential" not in response.text
+    assert runs[0]["status"] == "failed"
+    assert events[-1]["kind"] == "run_failed"
+    assert "credential" not in str(events)

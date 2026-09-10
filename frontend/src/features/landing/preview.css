@@ -1,0 +1,44 @@
+.console-hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.console-hero h2 { letter-spacing: -.035em; line-height: 1.1; }
+.console-hero { padding-block: 64px; }
+.console-nav a { font-family: inherit; font-size: 14px; opacity: 1; color: #bdc8d6; }
+.console-landing .hero-note { border: 0; padding: 0; background: transparent; max-width: 55ch; }
+.console-landing .hero-note span { opacity: 1; color: #bdc8d6; line-height: 1.8; }
+.console-landing .hero-actions .ghost-action { border: 0; padding-inline: 8px; text-decoration: underline; text-underline-offset: 6px; }
+.console-landing .problem-grid { gap: 32px; }
+.console-landing .problem-grid article { padding: 24px 0 0; border: 0; border-top: 1px solid var(--header-rule); background: transparent; }
+.console-landing .problem-grid p, .console-landing .pipeline-list p { font-size: 14px; line-height: 1.8; opacity: 1; color: #bdc8d6; }
+.console-landing .pipeline-list li { padding-block: 28px; }
+.console-landing .invariant-list li { border-left: 0; background: transparent; padding-block: 16px; border-top: 1px solid var(--header-edge); }
+.console-landing .architecture-caveat { border-left-width: 1px; }
+.console-landing .architecture-diagram span, .console-landing .footer-meta { opacity: 1; color: #bdc8d6; font-size: 13px; line-height: 1.7; }
+.console-landing .architecture-diagram span { font-family: inherit; }
+.console-landing .readout-head, .console-landing .patch-preview-title > span, .console-landing .patch-review-details summary { font-family: inherit; font-size: 13px; }
+.console-landing .patch-preview-footer { font-family: inherit; font-size: 13px; }
+.console-landing :is(h2, section) { scroll-margin-top: 100px; }
+html { scrollbar-color: var(--rule-strong) var(--canvas); }
+.console-landing .pipeline-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.console-landing .invariant-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.console-hero .hero-readout { border-top: 3px solid #78a5ff; }
+.console-hero .readout-head { font-size: 11px; opacity: 1; color: #bcc7d6; line-height: 1.5; }
+.patch-preview-title { padding: 24px 20px 20px; }
+.patch-preview-title p { margin: 0 0 8px; color: #8fb5ff; font: 10px/1.5 var(--mono); letter-spacing: .12em; }
+.patch-preview-title h3 { margin: 0 0 10px; font-size: 23px; letter-spacing: -.03em; }
+.patch-preview-title > span { color: #bcc7d6; font: 11px/1.5 var(--mono); }
+.patch-preview-diff { margin: 0 16px 12px; border: 1px solid var(--header-rule); background: #131a22; font: 12px/1.6 var(--mono); overflow-wrap: anywhere; }
+.patch-preview-diff > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding: 12px; color: #dce5f1; border-bottom: 1px solid var(--header-rule); font-size: 11px; }
+.patch-preview-diff > div span { color: #a9b5c5; }
+.patch-preview-diff p { display: flex; gap: 14px; margin: 0; padding: 10px 12px; }
+.patch-removed { color: #ffb3b3; background: #382328; }
+.patch-added { color: #a5e9bb; background: #193325; }
+.console-hero .hero-readout dt { font-size: 11px; opacity: 1; color: #bcc7d6; }
+.console-hero .hero-readout dd.ok { color: #93e5ae; }
+.console-hero .hero-readout dd.hold { color: #f5ca80; }
+.patch-review-details { margin: 0 16px 10px; border-top: 1px solid var(--header-rule); }
+.patch-review-details summary { min-height: 44px; padding: 13px 0; color: #a3c2ff; font: 11px/1.6 var(--mono); cursor: pointer; }
+.patch-review-details p { color: #bcc7d6; font-size: 13px; line-height: 1.6; margin: 0 0 14px; }
+.patch-preview-footer { display: flex; align-items: center; gap: 8px; padding: 14px 16px; color: #a5e9bb; border-top: 1px solid var(--header-rule); font: 11px/1.6 var(--mono); }
+.patch-preview-footer svg { width: 16px; height: 16px; flex-shrink: 0; }
+:is(button, a, input, summary):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; box-shadow: none; }
+.console-landing :is(button, a, summary):focus-visible, .console-topbar :is(button, a):focus-visible { outline-color: #a3c2ff; }
+@media (max-width: 900px) { .console-hero { grid-template-columns: minmax(0, 1fr); } .console-hero .hero-readout { max-width: 560px; width: 100%; } }

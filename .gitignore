@@ -1,4 +1,7 @@
 .DS_Store
+/backend/data/
+/data/
+/output/
 .agentcore/
 .env
 .venv/
@@ -18,3 +21,4 @@ playwright-report/
 test-results/
 .worktrees/
 demo-repositories/
+owned-check.*/

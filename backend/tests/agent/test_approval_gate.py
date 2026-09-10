@@ -61,9 +61,15 @@ def test_approval_id_and_paused_state_are_enforced(tmp_path: Path) -> None:
         approval_id="apply-upgrade",
         choice=ApprovalChoice.REJECTED,
     )
-    with pytest.raises(ApprovalGateError, match="not waiting"):
+    repeated = service.decide(
+        paused.run.id,
+        approval_id="apply-upgrade",
+        choice=ApprovalChoice.REJECTED,
+    )
+    assert repeated.status is RunStatus.CANCELLED
+    with pytest.raises(ApprovalGateError, match="different decision"):
         service.decide(
             paused.run.id,
             approval_id="apply-upgrade",
-            choice=ApprovalChoice.REJECTED,
+            choice=ApprovalChoice.APPROVED,
         )

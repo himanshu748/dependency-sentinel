@@ -55,6 +55,7 @@ def main() -> None:
             )
             env.update(
                 {
+                    "DEPENDENCY_SENTINEL_EVIDENCE_MODE": "fixture",
                     "DEPENDENCY_SENTINEL_REPOSITORY_ROOT": str(repositories),
                     "DEPENDENCY_SENTINEL_WORKSPACE_ROOT": str(temporary / "workspaces"),
                     "DEPENDENCY_SENTINEL_EVIDENCE_FIXTURE_PATH": str(ROOT / "fixtures/evidence"),

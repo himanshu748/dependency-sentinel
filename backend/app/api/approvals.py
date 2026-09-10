@@ -14,7 +14,7 @@ def create_approvals_router(*, workflow: DependencyUpgradeWorkflow) -> APIRouter
     router = APIRouter(prefix="/api", tags=["approvals"])
 
     @router.post("/runs/{run_id}/approvals")
-    async def decide(run_id: str, request: ApprovalRequest) -> dict:
+    def decide(run_id: str, request: ApprovalRequest) -> dict:
         try:
             run = workflow.decide(
                 run_id,
