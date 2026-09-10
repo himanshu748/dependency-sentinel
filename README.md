@@ -1,6 +1,6 @@
 # Dependency Sentinel
 
-[Connect a model](docs/ACTIVATION.md) · [Verified Qwen workflows](docs/QWEN-VERIFICATION.md) · [Submission checklist](docs/RELEASE-CHECKLIST.md)
+[Connect a model](docs/ACTIVATION.md) · [Verified Qwen workflows](docs/QWEN-VERIFICATION.md) · [Submission checklist](docs/RELEASE-CHECKLIST.md) · [Judging evidence](docs/JUDGING.md)
 
 For the real-input, local-first workspace and its verified limits, see [Local product workflow](LOCAL-PRODUCT.md).
 

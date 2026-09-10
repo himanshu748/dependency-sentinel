@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ConnectionDetails } from "../features/connection/ConnectionDetails";
 
 import { createRun, decideApproval, downloadReview, getEvents, getRun, listRuns, type ReviewExport } from "../api/client";
 import type { AgentRun, CandidateSelection, RunEnvelope, RunEvent } from "../api/types";
@@ -37,7 +38,6 @@ export function App() {
   const [repository, setRepository] = useState("");
   const [trusted, setTrusted] = useState(false);
   const [saved, setSaved] = useState<AgentRun[] | null>(null);
-  const [connection, setConnection] = useState("");
   const [utilityBusy, setUtilityBusy] = useState(false);
   const [exportBusy, setExportBusy] = useState<ReviewExport | null>(null);
   const [exportError, setExportError] = useState<{ message: string; kind: ReviewExport } | null>(null);
@@ -162,9 +162,6 @@ export function App() {
       setState(viewFor(current));
     } catch { setUtilityError({ message: "This run could not be reopened.", retry: () => void reopen(run) }); } finally { setUtilityBusy(false); operationBusy.current = false; }
   }
-  async function showConnection() {
-    try { const response = await fetch("/api/health"); if (!response.ok) throw new Error(); const info = await response.json(); setConnection((info.evidence_mode === "live" ? "Live OSV/PyPI evidence" : "Fixture evidence") + " / " + (info.fixture_mode ? "Local deterministic selection" : "Model-enabled selection") + ". Allowed root: " + info.repository_root); } catch { setConnection("Backend unavailable. Start the local service before scanning."); }
-  }
   async function exportReview(kind: ReviewExport) {
     if (state !== "completed" || !outcome || exportInFlight.current) return;
     exportInFlight.current = true;
@@ -228,17 +225,16 @@ export function App() {
       <section className="workspace-controls" aria-label="Repository review controls">
         <div className="workspace-toolbar">
           <button type="button" disabled={utilityBusy || busy || !!exportBusy} onClick={loadSaved}>{utilityBusy ? "Loading records…" : "Saved runs"}</button>
-          <button type="button" onClick={showConnection}>Connection details</button>
           {defaultRepository && <button type="button" disabled={busy} onClick={() => { setRepository(defaultRepository); scanRequest.current = null; }}>Use sample repository</button>}
           {state === "completed" && <div className="review-exports" aria-label="Approved review downloads" aria-busy={!!exportBusy}>
             <button type="button" disabled={!!exportBusy} onClick={() => void exportReview("patch")}>{exportBusy === "patch" ? "Preparing patch…" : "Download reviewed patch"}</button>
             <button type="button" disabled={!!exportBusy} onClick={() => void exportReview("receipt")}>{exportBusy === "receipt" ? "Preparing receipt…" : "Download review receipt"}</button>
           </div>}
         </div>
-        {connection && <p className="connection-detail" role="status">{connection}</p>}
         {exportNotice && <p className="export-notice" role="status">{exportNotice}</p>}
         {exportError && <div className="export-error" role="alert"><p><strong>Download unavailable.</strong> {exportError.message}</p><button type="button" disabled={!!exportBusy} onClick={() => void exportReview(exportError.kind)}>Retry download</button><button type="button" onClick={() => setExportError(null)}>Dismiss</button></div>}
       </section>
+      <ConnectionDetails />
       {utilityError && <div className="error-banner" role="alert"><span>{utilityError.message}</span><button type="button" onClick={utilityError.retry}>{utilityError.retryLabel || "Retry request"}</button><button type="button" onClick={() => setUtilityError(null)}>Dismiss</button></div>}
       {saved && <section className="saved-records"><header><div><h2>Saved runs</h2><p>Latest 50 reviews, stored on this machine.</p></div><button type="button" onClick={() => setSaved(null)}>Close saved runs</button></header>{saved.length ? <ul>{saved.map(run => <li key={run.id}><button type="button" disabled={utilityBusy} onClick={() => void reopen(run)}><strong>{run.input_summary.split("/").filter(Boolean).at(-1) || run.input_summary}</strong><small>{run.input_summary}</small></button><time dateTime={run.created_at}>{new Date(run.created_at).toLocaleString()}</time><span className={`run-status ${run.status}`}>{run.status.replaceAll("_", " ")}</span></li>)}</ul> : <p>No saved runs yet. Your first repository review will appear here.</p>}</section>}
       {error && (

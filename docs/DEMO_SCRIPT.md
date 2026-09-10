@@ -1,23 +1,34 @@
-# Dependency Sentinel demo video outline
+# Dependency Sentinel recording plan
 
-Status: recording and public upload pending. The final video must be public on YouTube or Vimeo and at most five minutes.
+Target length: about 4 minutes 15 seconds, below the five-minute limit. Public YouTube/Vimeo upload is still pending.
 
-Recording update, September 10: real Qwen3-8B tool workflows were verified on Modal
-on September 9. The endpoint is deliberately stopped. Resume it only with approval,
-warm it, and record fresh execution. When recording Qwen, identify Qwen + Strands
-accurately rather than reading any older fixture-only narration below. When using
-the free scripted demo, label it scripted throughout. Use architecture-current.png.
+## Recording prerequisites
 
-| Time | Show | Explain |
+The Qwen endpoint is stopped at the owner's request. Resume only with explicit approval, warm it, run the real workflow smoke check, then record a fresh run. Do not start inference for rehearsal.
+
+Use a fictional input and a temporary database. Hide private tabs, credentials and account information. Open Connection details to show configuration, but do not call that a successful model test. For a scripted rehearsal, keep "Scripted responses — no model inference" visible in the recording; do not present that clip as new live-model evidence.
+
+## Pitch
+
+Dependency Sentinel prepares one dependency upgrade for review, runs validation in a separate worktree, and keeps the original checkout unchanged. Approval unlocks the reviewed patch and its evidence receipt.
+
+## Screen sequence
+
+| Time | Screen/action | Narration cue |
 | --- | --- | --- |
-| 0:00–0:25 | Product landing page | Who the product helps and the repeated task they face |
-| 0:25–0:50 | Controlled local fixture + trust checkbox | Show a clean committed repository. Tests execute locally; a worktree is not a security sandbox. State that this run uses fixture advisory data and a scripted model. |
-| 0:50–1:45 | Run the application and inspect evidence | Verify candidate; stage + validate in worktree; show where the source evidence comes from |
-| 1:45–2:30 | Passing checks, exact source SHA, then approve | No download before approval. Explain that approval records the reviewed result and does not apply the patch. |
-| 2:30–3:15 | Download patch and review receipt | Open the JSON receipt: captured commit, evidence retrieval times, exact commands/results, approval time, execution mode and patch SHA-256. The receipt checks local consistency; it is not a signed attestation. |
-| 3:15–3:45 | Architecture PNG + Strands code | Name Strands Agents SDK; distinguish scripted demo from live inference |
-| 3:45–4:15 | Reopen approved run; show failed-run boundary | Source remains unchanged. A failed, incomplete or legacy unbound record cannot export. The fixture validates staged metadata; live mode resolves and tests the locked environment separately. |
+| 0:00–0:30 | Show the trusted synthetic repository and clean Git status. | A maintainer has to turn an advisory into a reviewable upgrade. State whether the advisory evidence is recorded or freshly fetched. |
+| 0:30–1:20 | Confirm repository trust and start a review. | Explain that tests execute code from this owned repository. A Git worktree is isolation of changes, not a security sandbox. |
+| 1:20–2:05 | Inspect selected release, source evidence, diff and commands. | Show the actual validation result. Do not equate a passing fixture test with current production compatibility. |
+| 2:05–2:50 | Approve, download the patch and review receipt. | Open source SHA, commands, results and patch digest. Approval does not apply or merge the patch. |
+| 2:50–3:30 | Show a recorded failed validation with export unavailable. | Label the recording if this failure is from a separate run. Explain what prevents a failed candidate from being accepted. |
+| 3:30–4:15 | Recheck unchanged source and show Strands architecture. | Explain advisory/release tools, deterministic verification and the human decision. End on the concrete review artifacts. |
 
-Do not show an AgentCore deployment or live Nova response until one has been verified. Mention Codex and Claude as development assistants. Keep AWS console credentials, account tokens, personal data and private browser tabs out of the recording.
+## Final checks
 
-Required publication: attach the public YouTube/Vimeo URL to the Devpost project, then watch the entire uploaded video to verify audio/text readability and duration.
+- Show a useful output and one difficult case, not only a landing page.
+- Name Strands Agents SDK and the provider used in the captured run. Use architecture-current.png.
+- Distinguish source evidence, model advice, deterministic validation and human approval.
+- Python projects with supported manifests and lockfiles; one upgrade per review. Recorded fixture advisories are not a current security audit. No automatic merge.
+- Disclose Codex as a development assistant; do not invent user adoption, results or deployments.
+- Watch the entire uploaded video while signed out. Confirm public playback, readable text, intelligible audio and a duration under five minutes.
+- Copy the verified public video URL into the submission. Recording a file alone does not complete this requirement.

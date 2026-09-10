@@ -1,0 +1,7 @@
+.connection-inspector { margin: 0 clamp(16px, 3vw, 48px) 16px; color: var(--ink); }
+.connection-inspector > button, .connection-panel button { min-height: 44px; padding: 9px 14px; border: 1px solid var(--rule, var(--line)); border-radius: 6px; color: var(--ink); background: var(--sheet, var(--surface)); font: inherit; cursor: pointer; }
+.connection-inspector > button[aria-expanded="true"] { border-color: var(--ink); }
+.connection-panel { margin-top: 10px; padding: 16px 20px; border: 1px solid var(--rule, var(--line)); border-radius: 8px; background: var(--sheet, var(--surface)); max-width: 900px; overflow-wrap: anywhere; }
+.connection-panel strong { font-size: 15px; }
+.connection-panel p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--muted); }
+.connection-panel button { margin-top: 12px; }

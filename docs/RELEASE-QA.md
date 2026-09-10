@@ -1,5 +1,28 @@
 # Release QA, September 10, 2026
 
+## Judging follow-up
+
+The judging-focused revision passed 499 tests: StudyPilot 101 backend/37 frontend,
+Dependency Sentinel 171/54, and ScamShield 104/32. All three frontend production
+builds passed. The earlier 472-test record below describes the previous release.
+
+The new Connection details panel was checked in Chromium at 1440×1000 and 390×1000.
+Keyboard Enter opened and closed it; the real local health response displayed
+scripted mode without claiming model access. The three fixture approval workflows
+were repeated successfully. Page identity, nonempty rendering, no error overlay,
+console health and tested landing/panel horizontal overflow checks passed.
+
+Unit tests cover configured external/Bedrock/AgentCore modes, unknown metadata,
+failed checks and cancellation. These do not prove provider availability. No model
+endpoint was resumed. Browser plugin was unavailable, so bundled Playwright was
+used. Screenshots and the browser harness remain outside the repository.
+
+JUDGING.md maps each criterion to evidence and remaining proof. The revised
+DEMO_SCRIPT.md includes a difficult case and final artifact. Submission-copy and
+Builder Center article drafts are local and ignored; no publication is claimed.
+
+## Earlier release record
+
 All checks below used the local September 10 release candidate. The Modal endpoint
 remained stopped. Real Qwen evidence is dated September 9 and recorded separately
 in QWEN-VERIFICATION.md.

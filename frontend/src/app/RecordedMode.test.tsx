@@ -13,7 +13,7 @@ async function reopenWithMode(execution: unknown, status = "completed") {
   ];
   vi.spyOn(globalThis, "fetch").mockImplementation(async input => {
     const url = String(input);
-    if (url === "/api/health") return new Response(JSON.stringify({ fixture_mode: false, evidence_mode: "live", repository_root: "/controlled" }));
+    if (url === "/api/health") return new Response(JSON.stringify({ fixture_mode: false, runtime_mode: "openai-compatible", evidence_mode: "live", repository_root: "/controlled" }));
     if (url.endsWith("/events")) return new Response(JSON.stringify(events));
     return new Response(JSON.stringify(url === "/api/runs" ? [run] : run));
   });
