@@ -1,0 +1,15 @@
+.review-checkpoints { padding: 24px 0; border-block: 1px solid var(--rule); }
+.review-checkpoints h2 { margin: 0 0 20px; font-size: 16px; line-height: 1.4; }
+.review-checkpoints dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 0; }
+.review-checkpoints dl > div { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.review-checkpoints dt { color: var(--muted); font-size: 12px; }
+.review-checkpoints dd { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 14px; font-weight: 600; }
+.review-checkpoints code { font: 13px/1.6 var(--mono); overflow-wrap: anywhere; }
+.review-checkpoints small { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.review-checkpoints a { color: var(--accent-strong); text-underline-offset: 4px; font-size: 13px; min-height: 44px; display: inline-flex; align-items: center; }
+.review-checkpoints details { margin-top: 20px; font-size: 13px; color: var(--muted); }
+.review-checkpoints summary { min-height: 44px; cursor: pointer; }
+.review-checkpoints details > code { display: block; color: var(--ink); }
+.review-checkpoints p { max-width: 70ch; line-height: 1.6; }
+#validation-output { scroll-margin-top: 24px; }
+@media (max-width: 760px) { .review-checkpoints dl { grid-template-columns: minmax(0, 1fr); gap: 20px; } }

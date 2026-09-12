@@ -13,6 +13,8 @@ import { RiskQueue } from "../features/risk/RiskQueue";
 import { ExecutionTimeline } from "../features/run/ExecutionTimeline";
 import { RecordedRunMode } from "../features/run/RecordedRunMode";
 import { ValidationPanel } from "../features/run/ValidationPanel";
+import { hasSuccessfulValidation } from "../features/run/validation";
+import { ReviewCheckpoints } from "../features/run/ReviewCheckpoints";
 import { ShieldIcon, ThemeIcon } from "../ui/Icons";
 import { applyTheme, getInitialTheme, type Theme } from "../ui/theme";
 
@@ -258,13 +260,14 @@ export function App() {
       ) : (
         <main className="review-workspace">
           <header className="run-summary"><div><h2>{candidate.package} <span>{candidate.current_version} → {candidate.target_version}</span></h2><p>{candidate.rationale}</p><RecordedRunMode snapshot={snapshot} /></div><div className="run-receipt"><span className={`run-status ${outcome?.run.status}`}>{outcome?.run.status.replaceAll("_", " ")}</span><code>{outcome?.run.id}</code></div></header>
+          <ReviewCheckpoints events={events} />
           <div className="operations-grid">
           <RiskQueue dependencies={dependencyRows} candidate={candidate as CandidateSelection} />
 
           <section className="execution-surface" aria-label="Upgrade execution">
             <ExecutionTimeline events={events} status={outcome?.run.status} />
             {state === "paused" || state === "deciding" ? (
-              <ApprovalGate busy={state === "deciding"} onDecision={decide} />
+              <ApprovalGate busy={state === "deciding"} validationReady={hasSuccessfulValidation(validation)} onDecision={decide} />
             ) : (
               <section className={`decision-result ${state}`} aria-live="polite">
                 <ShieldIcon />

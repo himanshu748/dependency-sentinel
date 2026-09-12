@@ -13,6 +13,8 @@ const events = [
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 function blobText(blob: Blob): Promise<string> {
+  // Fetch responses use Node's Blob; jsdom's FileReader only accepts its own Blob.
+  if (typeof blob.text === "function") return blob.text();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));

@@ -1,4 +1,5 @@
 import type { RunEvent, RunStatus } from "../../api/types";
+import { hasSuccessfulValidation } from "./validation";
 
 const steps = [
   ["repository_inspected", "Repository inspected", "Files, manifests and lockfiles analyzed"],
@@ -30,7 +31,7 @@ export function ExecutionTimeline({ events, status }: { events: RunEvent[]; stat
         const reached = Boolean(event) || approved || rejected;
         const decision = kind === "approval_required" && reached;
         const paused = decision && (!status || status === "waiting_for_approval");
-        const failed = kind === "validation_completed" && event?.payload.passed === false;
+        const failed = kind === "validation_completed" && Boolean(event) && !hasSuccessfulValidation(event);
         return (
           <li key={kind} className={failed || rejected ? "failed" : reached && !paused ? "complete" : paused ? "paused" : "pending"}>
             <span className="step-number">{index + 1}</span>

@@ -100,7 +100,7 @@ const events = [
     sequence: 6,
     kind: "validation_completed",
     summary: "Validation passed",
-    payload: { passed: true, results: [{ stdout: "2 passed in 1.42s" }] },
+    payload: { passed: true, results: [{ stdout: "2 passed in 1.42s", command: ["python", "-m", "pytest"], exit_code: 0, timed_out: false, duration_seconds: 1.42 }] },
     idempotency_key: "6",
     created_at: "2026-09-02T10:21:28Z",
   },

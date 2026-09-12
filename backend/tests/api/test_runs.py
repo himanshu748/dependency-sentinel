@@ -115,15 +115,16 @@ async def test_failed_scan_persists_recovery_reason(api_app, tmp_path) -> None:
 @pytest.mark.asyncio
 async def test_scan_keeps_health_responsive_and_rejects_parallel_execution(api_app) -> None:
     started, release = Event(), Event()
-    original = api_app.state.workflow.command_runner
+    original = api_app.state.workflow.start
 
-    class BoundedRunner:
-        def execute(self, request, *, cwd):
-            started.set()
-            assert release.wait(timeout=5)
-            return original.execute(request, cwd=cwd)
+    def bounded_start(*args, **kwargs):
+        # Synchronize at the worker boundary, before variable Git setup time.
+        # The health check must still complete while this worker is blocked.
+        started.set()
+        assert release.wait(timeout=30)
+        return original(*args, **kwargs)
 
-    api_app.state.workflow.command_runner = BoundedRunner()
+    api_app.state.workflow.start = bounded_start
     async with AsyncClient(
         transport=ASGITransport(app=api_app), base_url="http://testserver"
     ) as client:

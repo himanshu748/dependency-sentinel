@@ -27,6 +27,8 @@ Selection, staging and validation use one captured Git commit, even if the sourc
 
 Receipts establish consistency of a local saved record, not a signed attestation. They contain local paths and test output; review them before sharing. Older runs without complete provenance remain viewable but cannot export.
 
+The review workspace groups the captured revision, changed files, command results and patch fingerprint. Approval stays disabled when validation records are incomplete, failed or timed out, even if a saved `passed` flag or log text claims success. Rejection remains available.
+
 ## One-command judging demo
 
 Prerequisites: Python 3.11+, uv, Node.js 20.19+ (22.12+ recommended), npm, Git and Bash.
