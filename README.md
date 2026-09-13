@@ -190,6 +190,10 @@ The [hosted architecture PNG](docs/architecture-hosted.png) documents the deploy
 
 Himanshu Kumar is the solo entrant. Codex assisted implementation, testing and documentation; Claude Desktop assisted the landing-page implementation. Product decisions and submission responsibility remain with the entrant.
 
+## September 13 upgrade notes
+
+Read the [September 13 upgrade article on AWS Builder](https://builder.aws.com/content/3JDRj6Q6tozYTzEYjRCRr9TCETM/agents-for-humans-deadline-checks-privacy-previews-and-reviewable-patches) for the deadline checks, redaction preview, and review-evidence changes. The article is also linked in all three Devpost entries.
+
 ## License
 
 Apache-2.0
