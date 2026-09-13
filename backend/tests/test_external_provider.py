@@ -104,6 +104,27 @@ def test_external_factory_does_not_create_aws_clients(monkeypatch):
     assert model.client_args["timeout"] == 90.0
 
 
+@pytest.mark.parametrize("model_id", ["openai/gpt-oss-20b", "openai/gpt-oss-120b"])
+def test_groq_reasoning_has_bounded_completion_allowance(model_id):
+    model = create_provider_model(
+        external(
+            llm_base_url="https://api.groq.com/openai/v1",
+            llm_model_id=model_id,
+        )
+    )
+    assert model.config["params"] == {
+        "max_completion_tokens": 4096,
+        "reasoning_effort": "low",
+        "temperature": 0.0,
+    }
+    assert model.client_args["max_retries"] == 0
+
+
+def test_groq_settings_do_not_leak_to_other_hosts():
+    model = create_provider_model(external(llm_model_id="openai/gpt-oss-20b"))
+    assert model.config["params"] == {"max_tokens": 512, "temperature": 0.0}
+
+
 def test_app_wires_external_provider_and_reports_it_honestly(tmp_path, monkeypatch):
     import app.main as main
     from app.agent.model import create_strands_agent as real_factory
